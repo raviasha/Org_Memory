@@ -886,7 +886,7 @@ Exit criteria: tech stack file committed; Session 1 scaffold updated to match de
 Deliverable: initial Supabase migrations for all five canonical tables (assets, wiki_pages, cross_references, manifests, run_snapshots), RLS policies per table keyed to acl_scope and authenticated user entitlements, and Supabase Auth bootstrap. The `assets` table status enum must include `blocked_on_memory_write` as a valid status value alongside the standard ingest lifecycle values (pending, processing, indexed, failed, deleted) so Session 8d can set this status without a schema migration.
 Exit criteria: migrations run cleanly in a local Supabase instance; RLS tests confirm unauthorized rows are invisible; `blocked_on_memory_write` status value is present in the assets status enum; Playwright API test confirms auth-gated endpoint rejects unauthenticated callers.
 
-1d. - [ ] Session 1d, Platform Track: API contract design and OpenAPI spec.
+1d. - [x] Session 1d, Platform Track: API contract design and OpenAPI spec.
 Deliverable: OpenAPI 3.1 spec covering all v1 endpoints from the API-first integration contract, including auth scheme, ACL envelope, idempotency key convention, pagination, and error contracts. No implementation yet — spec only.
 Exit criteria: spec validates cleanly; every endpoint listed in the v1 integration contract is represented; spec committed to repo so subsequent sessions implement against it.
 
