@@ -878,11 +878,11 @@ Acceptance alignment rule:
 Deliverable: project layout, shared types, test runner setup (Vitest for unit tests, Playwright for E2E and API tests).
 Exit criteria: unit test runner and Playwright harness both execute in CI or local script; `e2e/` directory structure in place.
 
-1b. - [ ] Session 1b, Platform Track: tech stack decision, record, and API verification spike.
+1b. - [x] Session 1b, Platform Track: tech stack decision, record, and API verification spike.
 Deliverable: locked tech stack document committed to repo — frontend framework (Next.js recommended), backend language, API layer style (REST recommended for API-first surface), CI system, monorepo layout, and deployment target. Additionally, verify the exact Anthropic API product name, endpoint paths, and required account tier for Claude Managed Agents memory stores before any ingest sessions begin: confirm that create, seed, attach, read, and write operations work as described in this plan, confirm the deterministic file-path model (e.g. `/assets/{asset_id}.md`) is supported, and update the tech stack doc with the verified API surface and any deviations from plan assumptions. This is a go/no-go gate: if the memory store API does not exist or works materially differently, a plan amendment is required before Session 4 begins.
 Exit criteria: tech stack file committed; Session 1 scaffold updated to match decisions; Claude Managed Agents memory API verified and findings documented in tech stack file; go/no-go recorded; all subsequent sessions can build without re-asking these questions.
 
-1c. - [ ] Session 1c, Data Track: database schema, migrations, RLS, and Supabase Auth setup.
+1c. - [x] Session 1c, Data Track: database schema, migrations, RLS, and Supabase Auth setup.
 Deliverable: initial Supabase migrations for all five canonical tables (assets, wiki_pages, cross_references, manifests, run_snapshots), RLS policies per table keyed to acl_scope and authenticated user entitlements, and Supabase Auth bootstrap. The `assets` table status enum must include `blocked_on_memory_write` as a valid status value alongside the standard ingest lifecycle values (pending, processing, indexed, failed, deleted) so Session 8d can set this status without a schema migration.
 Exit criteria: migrations run cleanly in a local Supabase instance; RLS tests confirm unauthorized rows are invisible; `blocked_on_memory_write` status value is present in the assets status enum; Playwright API test confirms auth-gated endpoint rejects unauthenticated callers.
 
