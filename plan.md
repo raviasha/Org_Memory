@@ -894,7 +894,7 @@ Exit criteria: spec validates cleanly; every endpoint listed in the v1 integrati
 Deliverable: org memory manifest schema and validation service.
 Exit criteria: valid manifest passes and invalid manifest fails with clear errors.
 
-2b. - [ ] Session 2b, Platform Track: SCHEMA.md authoring and wiki bootstrap.
+2b. - [x] Session 2b, Platform Track: SCHEMA.md authoring and wiki bootstrap.
 Deliverable: initial SCHEMA.md committed to repo (wiki structure, naming conventions, page-type formats, ingest workflow, query workflow, lint rules). Supabase seed migration that creates the root index.md row, the empty log.md row, and one example wiki page for each page type so Claude has a template reference.
 Exit criteria: SCHEMA.md present in repo root; seed migration runs cleanly; index.md and log.md rows exist in local DB; at least one page of each type (summary, entity, concept, comparison, synthesis) exists as a seeded example.
 
