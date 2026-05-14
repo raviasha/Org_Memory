@@ -1,0 +1,62 @@
+[SYNTHETIC DOCUMENT — XLSX placeholder for seed corpus]
+
+# Comparable Transaction Analysis — Enterprise SaaS (Knowledge Management / AI Productivity)
+**Classification:** Restricted — Deal Team Only
+**Author:** Corporate Development Team
+**Date:** March 2026
+**Purpose:** Valuation benchmarking for TargetCo acquisition
+
+---
+
+## Transaction Universe
+
+12 comparable M&A transactions in the enterprise SaaS / AI productivity / knowledge management sector, closed between 2023 and early 2026.
+
+## Transaction Data
+
+| # | Target (anonymized) | Acquirer Type | Close Date | Target ARR ($M) | EV ($M) | EV/ARR | EV/EBITDA | ARR Growth at Close | NRR at Close | EBITDA Margin |
+|---|---------------------|--------------|-----------|----------------|---------|--------|----------|---------------------|-------------|--------------|
+| 1 | KnowledgeBase-A | Strategic | 2023-Q2 | 28.0 | 196.0 | 7.0x | 42.0x | 35% | 115% | 17% |
+| 2 | WorkflowAI-B | PE Sponsor | 2023-Q3 | 45.0 | 270.0 | 6.0x | 38.0x | 22% | 108% | 16% |
+| 3 | DocSearch-C | Strategic | 2023-Q4 | 18.0 | 162.0 | 9.0x | 58.0x | 41% | 120% | 16% |
+| 4 | ContextEngine-D | Strategic | 2024-Q1 | 35.0 | 245.0 | 7.0x | 41.0x | 29% | 116% | 17% |
+| 5 | EnterpriseWiki-E | PE Sponsor | 2024-Q2 | 52.0 | 286.0 | 5.5x | 35.0x | 18% | 106% | 16% |
+| 6 | SearchPlatform-F | Strategic | 2024-Q3 | 40.0 | 320.0 | 8.0x | 48.0x | 33% | 118% | 17% |
+| 7 | AIAssist-G | Strategic | 2024-Q4 | 62.0 | 434.0 | 7.0x | 44.0x | 27% | 114% | 16% |
+| 8 | TeamMemory-H | Strategic | 2025-Q1 | 30.0 | 240.0 | 8.0x | 50.0x | 38% | 121% | 16% |
+| 9 | OrgKnowledge-I | PE Sponsor | 2025-Q2 | 48.0 | 288.0 | 6.0x | 38.0x | 21% | 110% | 16% |
+| 10 | IntelliSearch-J | Strategic | 2025-Q3 | 38.0 | 304.0 | 8.0x | 48.0x | 31% | 117% | 17% |
+| 11 | ColabAI-K | Strategic | 2025-Q4 | 55.0 | 412.5 | 7.5x | 46.0x | 28% | 116% | 16% |
+| 12 | WorkKnowledge-L | Strategic | 2026-Q1 | 42.0 | 315.0 | 7.5x | 47.0x | 26% | 115% | 16% |
+
+## Statistical Summary
+
+| Metric | Min | 25th pct | Median | 75th pct | Max | Mean |
+|--------|-----|----------|--------|----------|-----|------|
+| EV/ARR | 5.5x | 6.3x | 7.0x | 7.9x | 9.0x | 7.1x |
+| EV/EBITDA | 35.0x | 39.5x | 45.5x | 48.5x | 58.0x | 44.6x |
+| ARR Growth | 18% | 23% | 29% | 34% | 41% | 29% |
+| NRR | 106% | 112% | 116% | 119% | 121% | 115% |
+
+## TargetCo Valuation Range (Implied)
+
+TargetCo FY25 ARR: $46.2M  
+TargetCo FY25 EBITDA (adj.): $7.8M  
+TargetCo ARR growth: 27.4%  
+TargetCo NRR: 118%
+
+| Multiple Basis | Comp Range | Implied EV Low | Implied EV High |
+|---------------|-----------|---------------|----------------|
+| EV/ARR | 6.3x – 7.9x | $291M | $365M |
+| EV/EBITDA | 39.5x – 48.5x | $308M | $378M |
+
+**Blended midpoint range: $300M – $370M EV**
+
+## Adjustments
+
+- Premium for ARR growth > comp median (+27.4% vs. 29% median): ~neutral
+- Discount for customer concentration risk (31% top-5): -5% to -8%
+- Premium for NRR above comp median (118% vs. 116%): +2% to +3%
+- IP encumbrance discount if ML model issue unresolved: -3% to -5%
+
+**Risk-adjusted range: $285M – $360M EV**

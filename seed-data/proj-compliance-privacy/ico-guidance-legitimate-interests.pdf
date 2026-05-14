@@ -1,0 +1,82 @@
+[SYNTHETIC DOCUMENT — URL scrape placeholder for seed corpus]
+[Source: scraped and normalized from ICO website — ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/legitimate-interests/]
+
+# ICO Guidance: Legitimate Interests as a Lawful Basis for Processing
+**Source:** UK Information Commissioner's Office (ICO)
+**URL:** https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/legitimate-interests/
+**Scraped:** January 2026
+**Classification:** Internal (normalized copy for compliance reference)
+
+---
+
+## What is legitimate interests?
+
+Legitimate interests is one of six lawful bases for processing personal data under the UK GDPR (Article 6(1)(f)). You can rely on legitimate interests if:
+
+1. You have a **legitimate interest** in processing the data
+2. The processing is **necessary** for that purpose
+3. The interests or fundamental rights and freedoms of the data subjects do **not override** your legitimate interests (the balancing test)
+
+This is sometimes called the three-part test or the LIA (Legitimate Interests Assessment).
+
+## When can you rely on legitimate interests?
+
+Legitimate interests can apply for a wide range of processing activities. Common examples include:
+- Processing for administrative purposes within a group of companies
+- Processing to prevent fraud
+- Network and information security
+- Direct marketing (with some caveats)
+- Transmission of data within a group for internal admin purposes
+
+## The three-part test
+
+### Part 1: Purpose test — Is there a legitimate interest?
+
+Your interest must be:
+- **Lawful**: not prohibited by law and consistent with common law obligations
+- **Sufficiently clear**: not vague or speculative
+- **Real and present**: not hypothetical
+
+Examples of legitimate interests recognized by ICO: commercial interests, social benefits, third-party benefits.
+
+### Part 2: Necessity test — Is processing necessary?
+
+"Necessary" means the processing must be targeted and proportionate. If you can achieve your purpose with less or no personal data, you cannot rely on legitimate interests.
+
+Ask: Is there a less intrusive way to achieve the same result?
+
+### Part 3: Balancing test — Do individual interests override yours?
+
+You must balance your interests against the data subject's interests, rights, and freedoms. Factors that tip the balance against you:
+- The data subject would not reasonably expect this processing
+- The processing could cause real harm
+- The data is sensitive (special category data)
+- The data subject is a child or vulnerable person
+
+## Legitimate Interests Assessment (LIA)
+
+ICO recommends documenting your LIA before relying on legitimate interests. A good LIA should:
+1. Identify the purpose and legitimate interest
+2. Assess whether processing is necessary and proportionate
+3. Assess likely impact on individuals
+4. Consider whether individual interests override the legitimate interest
+5. Implement any safeguards to mitigate impact
+
+A completed LIA does not guarantee compliance but demonstrates accountability.
+
+## When legitimate interests does NOT apply
+
+- When you have a legal obligation to carry out the processing (use legal obligation instead)
+- When the processing is necessary for a contract with the data subject (use contractual necessity)
+- When processing special category data (legitimate interests alone is insufficient)
+- When processing children's data for profiling or direct marketing
+
+## Practical implications for Acme Corp
+
+Based on Acme's current processing register, the following activities rely on legitimate interests:
+- Internal fraud detection and security monitoring
+- Customer analytics (aggregate, non-targeted)
+- B2B marketing to business contacts (with appropriate notice)
+- System administration and IT operations
+
+All reliances should be documented in Acme's LIA Register and reviewed annually.

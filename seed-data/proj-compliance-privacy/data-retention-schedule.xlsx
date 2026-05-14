@@ -1,0 +1,42 @@
+[SYNTHETIC DOCUMENT — XLSX placeholder for seed corpus]
+
+# Data Retention Schedule
+**Version:** 2.1
+**Owner:** Compliance Team
+**Last updated:** January 2026
+**Classification:** Internal
+
+---
+
+## Retention Periods by Data Class
+
+| Data Class | Subcategory | Retention Period | Legal Basis | Delete Method | Owner | Notes |
+|------------|-------------|-----------------|-------------|---------------|-------|-------|
+| PII - Customer | Account identifiers | 7 years post account closure | Contract, Legal obligation | Secure deletion | Engineering | Subject to right-to-erasure requests |
+| PII - Customer | Transaction records | 7 years from transaction date | Legal obligation (tax) | Secure deletion | Finance/Engineering | CCPA and GDPR compliant |
+| PII - Customer | Support communications | 3 years from last interaction | Legitimate interest | Secure deletion | Customer Success | Review under GDPR Art. 6(1)(f) |
+| PII - Customer | Marketing preferences | Until opt-out + 1 year | Consent | Secure deletion | Marketing | Opt-out triggers immediate pause |
+| PII - Employee | Employment records | 7 years post termination | Legal obligation | Secure deletion | HR | Subject to local employment law |
+| PII - Employee | Payroll data | 7 years | Legal obligation (tax) | Secure deletion | Finance/HR | |
+| PII - Employee | Access logs (sensitive systems) | 3 years | Security, legal | Secure deletion | Security | |
+| Transaction | Financial transactions | 7 years | Legal obligation (tax, SOX) | Archive then delete | Finance | |
+| Transaction | Contract records | 10 years post contract end | Legal obligation | Archive | Legal | |
+| Transaction | Purchase orders | 7 years | Legal obligation | Archive | Procurement | |
+| Log | Application logs (non-PII) | 90 days hot, 1 year archive | Security, operations | Auto-purge | Engineering | Logs containing PII purge at 30 days |
+| Log | Security event logs | 2 years | Security, compliance | Archive then delete | Security | SOC 2 requirement |
+| Log | Audit logs (admin access) | 5 years | Compliance, legal | Archive | Security/Compliance | Immutable, no early deletion |
+| Log | API access logs | 90 days | Operations | Auto-purge | Engineering | |
+| Contract | Customer contracts | 10 years post expiry | Legal obligation | Archive then delete | Legal | |
+| Contract | Vendor contracts | 7 years post expiry | Legal obligation | Archive then delete | Legal | |
+| HR | Performance reviews | 5 years | Legitimate interest | Secure deletion | HR | |
+| HR | Recruitment data (unsuccessful) | 1 year from decision | Consent | Secure deletion | HR | GDPR Art. 17 applies |
+| HR | Background check results | Duration of employment + 1 year | Legal obligation | Secure deletion | HR | Local law variation applies |
+| Backup | System backups (PII-containing) | 90 days | Operations | Encrypted overwrite | Engineering | Backup retention != PII retention |
+
+## Enforcement Mechanism
+
+Retention enforcement is automated via the Data Lifecycle Manager (DLM) service. Manual overrides require Compliance team approval. Exceptions for legal hold are tracked in the Legal Hold register.
+
+## Review Schedule
+
+This schedule is reviewed annually by Legal and Compliance. Changes require VP-level approval and documentation in the change log.

@@ -1,0 +1,19 @@
+{
+  "task_id": "task-010-alert-drift",
+  "project_id": "proj-eng-incident-ops",
+  "task_text": "Review the platform services repository and compare the alert thresholds configured in code against our documented alert-thresholds-config.yml. Identify any discrepancies between the two sources.",
+  "required_asset_ids": [
+    "platform-services-repo"
+  ],
+  "relevant_asset_ids": [
+    "alert-thresholds-config",
+    "api-gateway-runbook"
+  ],
+  "distractor_asset_ids": [
+    "marketing-campaign-brief",
+    "q1-sales-report"
+  ],
+  "cross_project_stores": [],
+  "task_class": "change-analysis",
+  "specificity_requirement": true
+}

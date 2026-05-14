@@ -1,0 +1,63 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus]
+
+# Acme Corp California Consumer Privacy Act (CCPA) Policy
+**Effective Date:** January 1, 2025
+**Classification:** Internal
+**Owner:** Legal/Compliance Team
+
+---
+
+## 1. Purpose
+
+This policy establishes Acme Corp's approach to compliance with the California Consumer Privacy Act (CCPA), as amended by the California Privacy Rights Act (CPRA), for the protection of California consumers' personal information.
+
+## 2. Scope
+
+This policy applies to all personal information Acme Corp collects from California residents in the course of its business operations.
+
+## 3. Categories of Personal Information Collected
+
+| Category | Examples | Business Purpose |
+|----------|----------|-----------------|
+| Identifiers | Name, email, IP address | Account management, service delivery |
+| Commercial information | Purchase history, transaction data | Service fulfillment, analytics |
+| Internet activity | Browsing history on Acme properties | Product improvement, security |
+| Geolocation | Country, region (not precise location) | Service localization, fraud prevention |
+| Professional info | Job title, employer | B2B account context |
+| Sensitive PI | Login credentials (hashed) | Authentication |
+
+## 4. Consumer Rights Under CCPA/CPRA
+
+California residents have the following rights, which Acme honors:
+
+1. **Right to Know** — Request disclosure of personal information collected, used, disclosed, or sold.
+2. **Right to Delete** — Request deletion of personal information (subject to legal exceptions).
+3. **Right to Correct** — Request correction of inaccurate personal information.
+4. **Right to Opt-Out** — Opt out of sale or sharing of personal information for cross-context behavioral advertising.
+5. **Right to Limit Use of Sensitive PI** — Limit use of sensitive personal information.
+6. **Right to Non-Discrimination** — Exercise CCPA rights without receiving discriminatory treatment.
+
+## 5. Submitting Consumer Requests
+
+California residents may submit requests via:
+- Online portal: privacy.acme-corp.example/california-rights
+- Email: privacy@acme-corp.example (subject: CCPA Request)
+- Toll-free: 1-800-555-0199
+
+Response time: 45 days (extendable to 90 days with notice).
+
+## 6. Do Not Sell or Share My Personal Information
+
+Acme Corp does not sell personal information. Acme does engage in cross-context behavioral advertising limited to opt-in consent. Opt-out links are available on all consumer-facing pages.
+
+## 7. Retention
+
+Personal information is retained per the Acme Data Retention Schedule (data-retention-schedule.xlsx). CCPA deletion requests trigger the same retention enforcement workflow.
+
+## 8. Contractor and Service Provider Obligations
+
+All service providers with access to California consumer personal information must sign a CCPA-compliant service provider agreement limiting use to specified purposes.
+
+## 9. Policy Review
+
+This policy is reviewed annually by Legal and updated to reflect regulatory changes. Current version: January 2025.

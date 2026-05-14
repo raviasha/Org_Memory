@@ -1,0 +1,20 @@
+{
+  "task_id": "task-005-active-incident",
+  "project_id": "proj-eng-incident-ops",
+  "task_text": "We are seeing 502 errors on the API gateway right now. Walk me through the exact diagnosis and remediation steps for this scenario, including which metrics to check and what commands to run.",
+  "required_asset_ids": [
+    "api-gateway-runbook"
+  ],
+  "relevant_asset_ids": [
+    "incident-postmortem-2026-03-15",
+    "service-dependency-map",
+    "alert-thresholds-config"
+  ],
+  "distractor_asset_ids": [
+    "marketing-campaign-brief",
+    "q1-sales-report"
+  ],
+  "cross_project_stores": [],
+  "task_class": "incident-response",
+  "specificity_requirement": true
+}

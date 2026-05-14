@@ -12,13 +12,16 @@
     "test": "turbo run test",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
+    "seed:corpus": "tsx scripts/seed-corpus.ts",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0",
+    "@supabase/supabase-js": "^2.43.0",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.1.1",
+    "tsx": "^4.0.0",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"

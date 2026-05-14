@@ -1,0 +1,28 @@
+week_start,week_end,service_area,primary_oncall,secondary_oncall,escalation_contact,notes
+2026-04-06,2026-04-12,Platform - API Gateway,Jordan Kim,Alex Rivera,Platform Lead: Sam Chen,
+2026-04-06,2026-04-12,Platform - Database,Morgan Lee,Casey Park,DBA Lead: Pat Wong,
+2026-04-06,2026-04-12,Platform - Background Jobs,Alex Rivera,Jordan Kim,Platform Lead: Sam Chen,
+2026-04-13,2026-04-19,Platform - API Gateway,Casey Park,Morgan Lee,Platform Lead: Sam Chen,
+2026-04-13,2026-04-19,Platform - Database,Jordan Kim,Alex Rivera,DBA Lead: Pat Wong,
+2026-04-13,2026-04-19,Platform - Background Jobs,Morgan Lee,Casey Park,Platform Lead: Sam Chen,
+2026-04-20,2026-04-26,Platform - API Gateway,Alex Rivera,Jordan Kim,Platform Lead: Sam Chen,
+2026-04-20,2026-04-26,Platform - Database,Casey Park,Morgan Lee,DBA Lead: Pat Wong,
+2026-04-20,2026-04-26,Platform - Background Jobs,Jordan Kim,Alex Rivera,Platform Lead: Sam Chen,
+2026-04-27,2026-05-03,Platform - API Gateway,Morgan Lee,Casey Park,Platform Lead: Sam Chen,
+2026-04-27,2026-05-03,Platform - Database,Alex Rivera,Jordan Kim,DBA Lead: Pat Wong,
+2026-04-27,2026-05-03,Platform - Background Jobs,Casey Park,Morgan Lee,Platform Lead: Sam Chen,
+2026-05-04,2026-05-10,Platform - API Gateway,Jordan Kim,Alex Rivera,Platform Lead: Sam Chen,
+2026-05-04,2026-05-10,Platform - Database,Morgan Lee,Casey Park,DBA Lead: Pat Wong,
+2026-05-04,2026-05-10,Platform - Background Jobs,Alex Rivera,Jordan Kim,Platform Lead: Sam Chen,
+2026-05-11,2026-05-17,Platform - API Gateway,Casey Park,Morgan Lee,Platform Lead: Sam Chen,Current week
+2026-05-11,2026-05-17,Platform - Database,Jordan Kim,Alex Rivera,DBA Lead: Pat Wong,Current week
+2026-05-11,2026-05-17,Platform - Background Jobs,Morgan Lee,Casey Park,Platform Lead: Sam Chen,Current week
+2026-05-18,2026-05-24,Platform - API Gateway,Alex Rivera,Jordan Kim,Platform Lead: Sam Chen,
+2026-05-18,2026-05-24,Platform - Database,Casey Park,Morgan Lee,DBA Lead: Pat Wong,
+2026-05-18,2026-05-24,Platform - Background Jobs,Jordan Kim,Alex Rivera,Platform Lead: Sam Chen,
+2026-05-25,2026-05-31,Platform - API Gateway,Morgan Lee,Casey Park,Platform Lead: Sam Chen,
+2026-05-25,2026-05-31,Platform - Database,Alex Rivera,Jordan Kim,DBA Lead: Pat Wong,
+2026-05-25,2026-05-31,Platform - Background Jobs,Casey Park,Morgan Lee,Platform Lead: Sam Chen,
+2026-06-01,2026-06-07,Platform - API Gateway,Jordan Kim,Alex Rivera,Platform Lead: Sam Chen,
+2026-06-01,2026-06-07,Platform - Database,Morgan Lee,Casey Park,DBA Lead: Pat Wong,
+2026-06-01,2026-06-07,Platform - Background Jobs,Alex Rivera,Jordan Kim,Platform Lead: Sam Chen,

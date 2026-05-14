@@ -1,0 +1,13 @@
+order_id,item_description,category,quantity,unit_cost_usd,total_cost_usd,supplier,order_date,delivery_date,status
+OS-2026-001,Copy paper A4 (500 sheet ream),Paper,200,4.50,900.00,OfficeWorld Inc,2026-01-05,2026-01-08,Delivered
+OS-2026-002,Ballpoint pens (box of 50),Writing,20,12.00,240.00,OfficeWorld Inc,2026-01-05,2026-01-08,Delivered
+OS-2026-003,Whiteboard markers (assorted),Markers,30,8.50,255.00,StationaryPlus,2026-01-12,2026-01-15,Delivered
+OS-2026-004,Sticky notes 3x3 (pack of 12),Notes,50,6.00,300.00,OfficeWorld Inc,2026-01-12,2026-01-15,Delivered
+OS-2026-005,Printer toner HP LaserJet,Printer supplies,10,45.00,450.00,TechSupplies Ltd,2026-01-19,2026-01-22,Delivered
+OS-2026-006,Filing folders (box of 100),Filing,15,18.00,270.00,OfficeWorld Inc,2026-01-26,2026-01-29,Delivered
+OS-2026-007,Staples (box of 5000),Fasteners,25,3.50,87.50,StationaryPlus,2026-02-02,2026-02-05,Delivered
+OS-2026-008,Desk calendar 2026,Planning,40,9.00,360.00,OfficeWorld Inc,2026-02-09,2026-02-12,Delivered
+OS-2026-009,Copy paper A4 (500 sheet ream),Paper,200,4.50,900.00,OfficeWorld Inc,2026-02-16,2026-02-19,Delivered
+OS-2026-010,Ergonomic mouse pad,Accessories,30,14.00,420.00,TechSupplies Ltd,2026-02-23,2026-02-26,Delivered
+OS-2026-011,Highlighters (pack of 10),Markers,40,7.00,280.00,StationaryPlus,2026-03-02,2026-03-05,Delivered
+OS-2026-012,Paper clips (box of 1000),Fasteners,20,2.50,50.00,OfficeWorld Inc,2026-03-09,2026-03-12,Delivered

@@ -1,0 +1,19 @@
+{
+  "task_id": "task-004-retention-lookup",
+  "project_id": "proj-compliance-privacy",
+  "task_text": "How long must we retain customer PII records, transaction logs, and vendor contracts under our current data retention schedule? Give the specific retention period for each category.",
+  "required_asset_ids": [
+    "data-retention-schedule"
+  ],
+  "relevant_asset_ids": [
+    "gdpr-compliance-checklist-v3",
+    "ccpa-policy-2025"
+  ],
+  "distractor_asset_ids": [
+    "employee-handbook-2025",
+    "office-supplies-procurement"
+  ],
+  "cross_project_stores": [],
+  "task_class": "policy-lookup",
+  "specificity_requirement": true
+}

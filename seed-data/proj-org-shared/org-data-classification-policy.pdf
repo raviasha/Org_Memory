@@ -1,0 +1,104 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus]
+
+# Acme Corp Data Classification Policy
+**Version:** 2.2
+**Owner:** Information Security / Legal
+**Classification:** Internal
+**Effective:** September 2025
+
+---
+
+## Purpose
+
+This policy defines Acme Corp's data classification framework, ensuring that all data is handled appropriately based on its sensitivity and potential impact if disclosed, modified, or destroyed.
+
+---
+
+## Classification Tiers
+
+### Tier 1: Public
+
+**Definition:** Information that has been approved for public release or is already in the public domain.
+
+**Examples:** Press releases, public product documentation, publicly filed financial reports, published blog posts.
+
+**Handling rules:**
+- No access restrictions
+- May be shared externally without approval
+- Still subject to Acme branding and copyright guidelines
+
+---
+
+### Tier 2: Internal
+
+**Definition:** Information intended for general use within Acme, not for external distribution without approval.
+
+**Examples:** Internal policies and procedures, general business communications, meeting notes, team roadmaps.
+
+**Handling rules:**
+- Do not share externally without manager approval
+- May be shared across teams within Acme
+- Store on Acme-approved systems (not personal devices or unapproved cloud services)
+- Email to non-Acme addresses requires business justification
+
+---
+
+### Tier 3: Confidential
+
+**Definition:** Sensitive business information where unauthorized disclosure could harm Acme's competitive position, financial performance, or regulatory standing.
+
+**Examples:** Unannounced financial results, M&A due diligence materials, vendor contracts, employee compensation data, customer contracts, security audit reports.
+
+**Handling rules:**
+- Access on need-to-know basis only
+- Encryption required for storage and transmission
+- Do not share with third parties without NDA and manager/legal approval
+- Label documents with "CONFIDENTIAL" header
+- Prohibit printing on unattended printers
+
+---
+
+### Tier 4: Restricted
+
+**Definition:** The most sensitive category. Unauthorized disclosure could cause severe harm to individuals, Acme, or third parties. Includes personal data that triggers legal obligations.
+
+**Examples:** Deal-stage M&A target details, individual health or financial records, authentication credentials, cryptographic keys, board pre-announcement materials, regulatory examination materials.
+
+**Handling rules:**
+- Strict need-to-know access list, approved by VP or above
+- Mandatory encryption at rest and in transit (AES-256, TLS 1.3)
+- No access from personal or unmanaged devices
+- All access logged and audited
+- Label "RESTRICTED" on all documents
+- Requires security review before vendor access
+- Incident response plan must address Restricted data breach within 72 hours (GDPR)
+
+---
+
+## Vendor Access and Data Classification
+
+Vendors accessing Acme data must comply with data handling requirements appropriate to the highest classification tier they can access:
+
+| Vendor Access Tier | Minimum Requirement |
+|-------------------|---------------------|
+| Internal only | Signed NDA, acceptable use policy |
+| Confidential | NDA + SOC 2 Type II or ISO 27001 |
+| Restricted | NDA + SOC 2 Type II + signed DPA + security review |
+
+See vendor-data-handling-requirements.pdf (Compliance project) for full vendor onboarding requirements.
+
+---
+
+## Reclassification
+
+Data should be reclassified if:
+- Circumstances change (e.g., an M&A deal is announced → materials reclassify from Restricted to Confidential/Public)
+- Time-based decay (e.g., historical financials after earnings release)
+
+Reclassification requires approval from the document owner and Data Governance team.
+
+---
+
+## Enforcement
+
+Non-compliance with this policy may result in disciplinary action up to and including termination. Report suspected violations to security@acme-corp.example.

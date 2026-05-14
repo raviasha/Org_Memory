@@ -1,0 +1,46 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus — DISTRACTOR]
+
+# Acme Corp Internal Product Roadmap FY26
+**Classification:** Restricted — Internal Only
+**Owner:** Product Management
+**Date:** January 2026
+**Status:** Approved for internal distribution
+
+---
+
+## FY26 Product Vision
+
+Acme Corp's FY26 product roadmap focuses on three strategic pillars:
+1. **AI-Native Workflows**: Deep integration of AI assistance into every workflow
+2. **Enterprise Governance**: Enhanced security, compliance, and audit capabilities
+3. **Platform Ecosystem**: Third-party integrations and API extensibility
+
+## Q1 FY26 Deliverables (Completed)
+
+- ✅ AI assistant v2.0 with improved context retention
+- ✅ SSO/SAML improvements for enterprise customers
+- ✅ Webhook API v2 (breaking change from v1)
+- ✅ Mobile app iOS improvements
+
+## Q2 FY26 Deliverables (In Progress)
+
+- 🔄 Knowledge base enterprise search (ETA: May 2026)
+- 🔄 Bulk data export API (ETA: June 2026)
+- 🔄 Audit log UI and export (ETA: April 2026)
+- 🔄 EU data residency option (ETA: June 2026)
+
+## Q3–Q4 FY26 Planned
+
+- Multi-tenant workspace isolation improvements
+- AI model provider selection (Claude / OpenAI)
+- Advanced analytics dashboard
+- GitHub and Confluence connectors
+- SOC 2 Type II renewal
+
+## Key Dependencies and Risks
+
+- EU data residency requires infrastructure work in AWS eu-west-1 region
+- AI model provider selection depends on partner agreements under negotiation
+- Analytics dashboard depends on data warehouse migration (technical debt item)
+
+[NOTE: This is a distractor document. Not relevant to TargetCo due diligence tasks.]

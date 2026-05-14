@@ -1,0 +1,54 @@
+[SYNTHETIC IMAGE STUB — PNG placeholder for seed corpus]
+[Image type: Architecture diagram — service dependency map]
+[OCR extracted text and caption generated at ingest time]
+
+# Service Dependency Map — Acme Platform Services
+**File:** service-dependency-map.png
+**Source type:** image (OCR + caption)
+**Classification:** Internal
+
+---
+
+## OCR Extracted Text (Synthetic)
+
+API Gateway → Auth Service
+API Gateway → Projects Service
+API Gateway → Assets Service
+API Gateway → Wiki Service
+API Gateway → Task Service
+
+Projects Service → PostgreSQL (Primary)
+Assets Service → PostgreSQL (Primary)
+Assets Service → Supabase Storage
+Wiki Service → PostgreSQL (Primary)
+Task Service → PostgreSQL (Primary)
+Task Service → Redis Cache
+
+Auth Service → PostgreSQL (Auth DB)
+Auth Service → Email Service (SMTP)
+
+PostgreSQL (Primary) → PostgreSQL Read Replica 1
+PostgreSQL (Primary) → PostgreSQL Read Replica 2
+
+Background Jobs → PostgreSQL (Primary)
+Background Jobs → Supabase Storage
+Background Jobs → External LLM APIs
+
+Monitoring → All Services (read-only metrics)
+CDN → API Gateway
+
+## Caption (Generated)
+
+Architecture diagram showing Acme's platform service dependencies. The API Gateway routes traffic to five backend services: Auth, Projects, Assets, Wiki, and Task. All data services connect to the primary PostgreSQL database with two read replicas. The Assets service has additional storage dependencies (Supabase Storage). The Task service uses a Redis cache for session state. Background jobs run asynchronously against the same database and storage layers. An external CDN sits in front of the API Gateway for static assets.
+
+## Key Services
+
+| Service | Namespace | Upstream Dependencies | Downstream Consumers |
+|---------|-----------|----------------------|---------------------|
+| api-gateway | platform | CDN | All API services |
+| auth-service | platform | postgres-auth | api-gateway |
+| projects-service | services | postgres-primary | api-gateway |
+| assets-service | services | postgres-primary, storage | api-gateway, background-jobs |
+| wiki-service | services | postgres-primary | api-gateway |
+| task-service | services | postgres-primary, redis | api-gateway |
+| background-jobs | jobs | postgres-primary, storage, llm-apis | (async, no direct consumers) |

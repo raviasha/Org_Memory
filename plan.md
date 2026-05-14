@@ -904,7 +904,7 @@ Deliverable: load manifest, enter task, view placeholder context panel.
 Exit criteria: UI can run end-to-end with mocked backend responses.
 
 #### Wave 1: Ingestion and visibility first
-4. - [ ] Session 4, Data Track: seed corpus and synthetic data packs.
+4. - [x] Session 4, Data Track: seed corpus and synthetic data packs.
 Deliverable: all synthetic assets defined in the **Synthetic Demo Corpus** section authored and committed under `seed-data/` with one directory per project. Eval label JSON files committed under `eval/cases/`. Seed loader script creates stub DB records for all assets directly (without requiring the full ingest pipeline) in a local Supabase instance.
 Exit criteria: all 10 demo tasks have an eval label file (including task 10 alert-drift for the git connector); every asset in the corpus is discoverable from the seed loader including the `platform-services-repo` stub record; seed script is idempotent; Playwright API test confirms asset count per project matches corpus spec. Note: folder ingest pipeline smoke test (proj-eng-incident-ops folder through the real ingest pipeline) is deferred to Session 5b exit criteria after the ingest pipeline is built; git ingest pipeline smoke test (platform-services-repo) is deferred to Session 5 exit criteria.
 

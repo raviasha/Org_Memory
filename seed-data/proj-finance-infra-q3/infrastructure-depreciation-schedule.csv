@@ -1,0 +1,15 @@
+asset_class,asset_description,acquisition_year,original_cost_usd,useful_life_years,annual_depreciation_usd,accumulated_depreciation_usd,net_book_value_usd,depreciation_method,disposal_date
+Server Hardware - Gen 7 Blades,Production compute cluster Rack A,2021,480000,5,96000,288000,192000,Straight-line,2026
+Server Hardware - Gen 7 Blades,Production compute cluster Rack B,2021,480000,5,96000,288000,192000,Straight-line,2026
+Storage Array - Primary SAN,Primary SAN storage array,2020,620000,7,88571,442857,177143,Straight-line,2027
+Storage Array - DR NAS,Disaster recovery NAS,2020,280000,7,40000,200000,80000,Straight-line,2027
+Network Infrastructure - Core,Core switching and routing,2019,190000,7,27143,189000,1000,Straight-line,2026
+Network Infrastructure - Edge,Edge load balancers and firewalls,2021,145000,5,29000,87000,58000,Straight-line,2026
+On-prem Kubernetes Cluster,Container orchestration hardware,2022,350000,5,70000,140000,210000,Straight-line,2027
+Backup Appliances,Tape and disk backup appliances,2020,95000,7,13571,67857,27143,Straight-line,2027
+Security Hardware - HSM,Hardware security modules (2x),2021,78000,7,11143,33429,44571,Straight-line,2028
+UPS and Power Infrastructure,Uninterruptible power supply units,2019,120000,10,12000,96000,24000,Straight-line,2029
+Colocation Leasehold Improvements,Cage fit-out and cabling,2019,65000,10,6500,52000,13000,Straight-line,2029
+Workstation Fleet - Engineering,80 developer workstations,2023,320000,4,80000,80000,240000,Straight-line,2027
+Workstation Fleet - General,120 general staff workstations,2022,360000,4,90000,180000,180000,Straight-line,2026
+Teleconference Equipment,Meeting room AV and cameras,2021,55000,5,11000,33000,22000,Straight-line,2026

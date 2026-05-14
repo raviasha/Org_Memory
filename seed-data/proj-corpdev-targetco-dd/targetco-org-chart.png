@@ -1,0 +1,53 @@
+[SYNTHETIC IMAGE STUB — PNG placeholder for seed corpus]
+[Image type: Organizational chart]
+[OCR extracted text and caption generated at ingest time]
+
+# TargetCo Org Chart
+**File:** targetco-org-chart.png
+**Source type:** image (OCR + caption)
+**Classification:** Restricted — Deal Team Only
+
+---
+
+## OCR Extracted Text (Synthetic)
+
+CEO: Diana Walsh
+  └── CTO: Marcus Chen
+        ├── VP Engineering: Priya Nair
+        │     ├── Engineering Manager (Platform): Sam Torres
+        │     │     └── Platform team: 5 engineers
+        │     ├── Engineering Manager (Product): Jamie Liu
+        │     │     └── Product team: 8 engineers
+        │     └── Engineering Manager (Data): Chris Park
+        │           └── Data team: 3 engineers
+        └── Staff Engineer: Alex Kim (reports to CTO, cross-team)
+  └── VP Product: Rachel Stone
+        ├── Product Manager (Core): Tom Nash
+        └── Product Manager (Enterprise): Lisa Zhao
+  └── VP Sales: Ben Carter
+        ├── Enterprise Sales Lead (NA): 3 AEs
+        ├── SMB Sales Lead: 5 AEs
+        └── Sales Operations: 2 staff
+  └── VP Customer Success: Maya Singh
+        ├── CSM team: 6 CSMs
+        └── Support team: 4 agents
+  └── CFO: Kevin Marsh
+        ├── Controller: (vacant)
+        └── Finance Analyst: 1 staff
+  └── General Counsel: Sarah Fields (part-time)
+
+Total headcount: 52
+
+## Caption (Generated)
+
+TargetCo organizational chart showing reporting structure as of April 2026. The company has a typical SaaS structure with the CEO (Diana Walsh) overseeing five VP-level direct reports: CTO (Marcus Chen), VP Product (Rachel Stone), VP Sales (Ben Carter), VP Customer Success (Maya Singh), and CFO (Kevin Marsh). The CTO leads the largest team (28 engineers across platform, product, and data tracks). Key observation: CTO Marcus Chen owns all engineering architecture decisions and has two key lieutenants — VP Engineering Priya Nair and Staff Engineer Alex Kim. Controller role is vacant, which may require prompt filling post-close.
+
+## Key Persons for DD
+
+| Name | Title | DD Priority | Notes |
+|------|-------|------------|-------|
+| Marcus Chen | CTO | Critical | Key person risk; retention package required |
+| Diana Walsh | CEO | High | Transition or retention TBD by deal terms |
+| Priya Nair | VP Engineering | High | Technical leadership continuity |
+| Rachel Stone | VP Product | Medium | Product roadmap continuity |
+| Ben Carter | VP Sales | High | Customer relationship risk if lost |

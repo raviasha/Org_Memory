@@ -1,0 +1,75 @@
+[SYNTHETIC DOCUMENT — DOCX placeholder for seed corpus]
+
+# IT Infrastructure RFP 2026 — Request for Proposal
+
+**Document type:** Formal RFP
+**Classification:** Confidential
+**Issued by:** Acme Corp IT Procurement
+**Issue date:** January 2026
+**Submission deadline:** March 31, 2026
+
+---
+
+## 1. Overview
+
+Acme Corp is soliciting proposals from qualified vendors for the provision of cloud infrastructure services and on-premises hardware to support our Q3 FY26 infrastructure modernization program.
+
+## 2. Scope of Work
+
+### 2.1 Cloud Infrastructure Services
+- Compute: minimum 500 vCPUs across at least 2 regions
+- Storage: minimum 5PB scalable object storage
+- Networking: VPN, private peering, DDoS protection
+- Managed Kubernetes or equivalent container orchestration
+- Managed database services (PostgreSQL-compatible)
+
+### 2.2 On-Premises Hardware
+- High-density blade servers for colocation
+- SAN/NAS storage arrays
+- Network switching and redundancy
+
+## 3. Technical Requirements
+
+| Requirement ID | Description                                      | Priority |
+|----------------|--------------------------------------------------|----------|
+| TR-001         | 99.99% compute SLA                               | Must Have|
+| TR-002         | Multi-region active-active deployment            | Must Have|
+| TR-003         | SOC 2 Type II certification                      | Must Have|
+| TR-004         | ISO 27001 certification                          | Must Have|
+| TR-005         | GDPR Data Processing Agreement available         | Must Have|
+| TR-006         | FedRAMP authorization (Moderate)                 | Should Have|
+| TR-007         | Dedicated support team with 4-hour SLA response  | Must Have|
+| TR-008         | Migration tooling and professional services team | Must Have|
+
+## 4. Evaluation Rubric
+
+Proposals will be scored on:
+- Cost (30%) — 5-year TCO
+- Technical capability (25%)
+- SLA terms (20%)
+- Security compliance (15%)
+- Migration support (10%)
+
+## 5. Submission Requirements
+
+Proposals must include:
+1. Signed cover letter from authorized representative
+2. 5-year TCO model with itemized line items
+3. Compliance matrix against all TR requirements
+4. References from three comparable deployments
+5. Signed GDPR Data Processing Agreement
+
+## 6. Evaluation Timeline
+
+| Milestone            | Date           |
+|----------------------|----------------|
+| RFP issue            | Jan 15, 2026   |
+| Questions due        | Feb 14, 2026   |
+| Proposals due        | Mar 31, 2026   |
+| Evaluation complete  | Apr 30, 2026   |
+| Award notification   | May 15, 2026   |
+| Contract start       | Jul 1, 2026    |
+
+## 7. Contact
+
+IT Procurement: procurement@acme-corp.example

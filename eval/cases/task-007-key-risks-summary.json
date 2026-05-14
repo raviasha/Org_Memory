@@ -1,0 +1,20 @@
+{
+  "task_id": "task-007-key-risks-summary",
+  "project_id": "proj-corpdev-targetco-dd",
+  "task_text": "Summarize the top three risks in the TargetCo acquisition and quantify the financial exposure for each. Include the specific ARR and EBITDA figures from the financial summary that are relevant to each risk.",
+  "required_asset_ids": [
+    "targetco-key-risks-memo",
+    "targetco-financial-summary-fy25"
+  ],
+  "relevant_asset_ids": [
+    "targetco-tech-stack-assessment",
+    "targetco-ip-registry",
+    "targetco-customer-contract-template"
+  ],
+  "distractor_asset_ids": [
+    "acme-internal-roadmap-2026"
+  ],
+  "cross_project_stores": [],
+  "task_class": "due-diligence",
+  "specificity_requirement": true
+}

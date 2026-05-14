@@ -1,0 +1,53 @@
+[SYNTHETIC DOCUMENT — XLSX placeholder for seed corpus]
+
+# TargetCo IP Registry
+**Classification:** Restricted — Deal Team Only
+**Source:** TargetCo legal team (IP schedule from data room)
+**Date:** March 2026
+
+---
+
+## Patents
+
+| IP ID | Title | Filing Date | Status | Jurisdiction | Assignee | Notes |
+|-------|-------|------------|--------|-------------|---------|-------|
+| PAT-001 | Method for real-time collaborative document indexing | 2022-03-15 | Granted | US | TargetCo Inc. | US10,234,XXX — core product feature |
+| PAT-002 | System for context-aware knowledge retrieval | 2023-06-20 | Pending | US, EU | TargetCo Inc. | Prosecution ongoing |
+| PAT-003 | AI-assisted workflow automation interface | 2024-01-10 | Pending | US | TargetCo Inc. | Provisional only; full app not yet filed |
+
+## Trademarks
+
+| Mark | Jurisdiction | Registration Date | Status | Classes |
+|------|-------------|------------------|--------|---------|
+| TARGETCO (word mark) | US, EU, UK | 2021-08-01 | Registered | IC 42 (SaaS) |
+| TargetCo logo | US | 2021-09-15 | Registered | IC 42 |
+
+## Proprietary Software
+
+| Asset ID | Name | Description | License Terms | Status |
+|---------|------|-------------|--------------|--------|
+| SW-001 | Core SaaS platform | Primary customer-facing application | Proprietary; all rights reserved | Active |
+| SW-002 | Analytics engine | Internal Redshift-based analytics layer | Proprietary | Active (legacy) |
+| SW-003 | API integration framework | REST/webhook integration toolkit | Proprietary | Active |
+| SW-004 | ML feature extractor | Internal ML model for document feature extraction | Proprietary; uses training data from customer agreements (see contract clause 5.2) | Active |
+
+## Open Source Dependencies (Key)
+
+| Component | License | Version | Commercial Use Allowed |
+|-----------|---------|---------|----------------------|
+| React | MIT | 18.x | Yes |
+| Next.js | MIT | 14.x | Yes |
+| PostgreSQL | PostgreSQL License | 15 | Yes |
+| Redis | BSD 3-Clause | 7.x | Yes |
+| Airflow | Apache 2.0 | 2.5 | Yes |
+
+## IP Encumbrance Assessment
+
+| Asset | Encumbrance | Details | Risk Level |
+|-------|-------------|---------|-----------|
+| PAT-001 | Clean | No licensing agreements, no challenges | Low |
+| PAT-002 | Potential overlap | Prior art search incomplete; competitor filed similar claim Q3 2024 | Medium |
+| SW-004 (ML model) | Unclear | Training data includes customer data per contract clause 5.2; GDPR implications on transfer | High |
+| SW-001 (Core platform) | Clean | No encumbrances | Low |
+
+*[Deal team note: SW-004 ML model training data provenance requires legal review before close. If customer data was used in training, change-of-control notifications and potentially customer consent may be required.]*

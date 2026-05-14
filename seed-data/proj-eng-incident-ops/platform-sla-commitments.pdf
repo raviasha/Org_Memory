@@ -1,0 +1,92 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus]
+
+# Acme Platform SLA Commitments
+**Document type:** Customer-facing SLA
+**Classification:** Internal (governs external commitments)
+**Effective:** January 1, 2026
+**Version:** 3.0
+
+---
+
+## Service Level Agreement — Platform Services
+
+This document defines Acme Corp's service level commitments to customers by service tier.
+
+---
+
+## Tier Definitions
+
+| Tier | Description | Customers |
+|------|-------------|-----------|
+| Enterprise | Dedicated SLA with contractual penalties | Signed enterprise contracts |
+| Business | Standard SLA with credits | Self-serve business plans |
+| Starter | Best-effort, no contractual SLA | Starter and free plans |
+
+---
+
+## Uptime Commitments
+
+| Service | Enterprise SLA | Business SLA | Measurement Period |
+|---------|---------------|-------------|-------------------|
+| API Gateway | 99.9% | 99.5% | Monthly |
+| Core API (CRUD) | 99.9% | 99.5% | Monthly |
+| File Ingestion | 99.5% | 99.0% | Monthly |
+| Wiki Services | 99.5% | 99.0% | Monthly |
+| Authentication | 99.99% | 99.9% | Monthly |
+
+---
+
+## Response Time Commitments
+
+| Service | P50 Target | P99 Target | Tier |
+|---------|-----------|-----------|------|
+| API read operations | 200ms | 1.5s | Enterprise |
+| API write operations | 500ms | 3.0s | Enterprise |
+| File ingest (start) | 1s | 5s | Enterprise |
+| Wiki query | 300ms | 2.0s | Enterprise |
+
+---
+
+## Incident Response Times (Enterprise)
+
+| Severity | Response Time | Resolution Target | Communication Frequency |
+|----------|--------------|-------------------|------------------------|
+| P1 (>5% error rate or >5min downtime) | 15 minutes | 4 hours | Every 30 minutes |
+| P2 (degraded performance, <5% errors) | 1 hour | 8 hours | Every 2 hours |
+| P3 (minor issue, workaround available) | 4 hours | 3 business days | On resolution |
+
+---
+
+## Service Credits (Enterprise)
+
+| Monthly Uptime | Credit Applied |
+|---------------|---------------|
+| 99.0% – 99.9% | 10% of monthly fee |
+| 95.0% – 99.0% | 25% of monthly fee |
+| Below 95.0%   | 50% of monthly fee |
+
+Credits are applied to the next billing cycle. Credits are the sole remedy for SLA breaches under this agreement.
+
+---
+
+## Exclusions
+
+SLA commitments do not apply during:
+- Scheduled maintenance windows (communicated 48 hours in advance)
+- Force majeure events
+- Customer-caused incidents
+- Incidents in third-party services outside Acme's control
+
+---
+
+## Planned Maintenance Windows
+
+Scheduled maintenance: Sundays 02:00–04:00 UTC. Customers are notified via status page and email at least 48 hours in advance.
+
+---
+
+## SLA Monitoring and Reporting
+
+- Real-time status page: status.acme-corp.example
+- Monthly uptime reports available in customer dashboard
+- Enterprise customers receive monthly SLA compliance reports via email
