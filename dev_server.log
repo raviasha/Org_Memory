@@ -1,0 +1,53 @@
+
+> @org-memory/web@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use, trying 3001 instead.
+  ▲ Next.js 14.2.35
+  - Local:        http://localhost:3001
+
+ ✓ Starting...
+ ✓ Ready in 1533ms
+ ✓ Compiled /api/v1/health in 420ms (97 modules)
+ GET /api/v1/health 401 in 496ms
+ ✓ Compiled /api/v1/ingest/url in 94ms (100 modules)
+ POST /api/v1/ingest/url 200 in 127ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 1005ms (553 modules)
+ POST /api/v1/ingest/url 404 in 1141[?25h
+T /api/v1/ingest/url 404 in 1139ms
+ POST /api/v1/ingest/url 404 in 1120ms
+ POST /api/v1/ingest/url 404 in 1138ms
+ POST /api/v1/ingest/url 404 in 1108ms
+ POST /api/v1/ingest/url 200 in 30ms
+ POST /api/v1/ingest/url 401 in 29ms
+ POST /api/v1/ingest/url 200 in 30ms
+ POST /api/v1/ingest/url 200 in 17ms
+ ✓ Compiled /api/v1/assets/[asset_id]/representations in 258ms (316 modules)
+ ✓ Compiled (318 modules)
+ POST /api/v1/ingest/url 400 in 211ms
+ POST /api/v1/ingest/url 200 in 350ms
+ GET /api/v1/assets?project_id=proj-compliance-privacy 401 in 364ms
+ GET /api/v1/assets?project_id=proj-compliance-privacy&source_type=url 200 in 344ms
+ POST /api/v1/ingest/url 400 in 11ms
+ POST /api/v1/ingest/url 400 in 27ms
+ POST /api/v1/ingest/url 200 in 13ms
+ GET /api/v1/assets/2fbd8902-8029-5f4a-8201-098070dd9ac5/representations 404 in 651ms
+ POST /api/v1/ingest/url 400 in 4ms
+ GET /api/v1/health 401 in 18ms
+ ○ Compiling /_error ...
+ POST /api/v1/ingest/url 404 in 29933ms
+ POST /api/v1/ingest/url 404 in 29949ms
+ POST /api/v1/ingest/url 404 in 29957ms
+ POST /api/v1/ingest/url 404 in 29963ms
+ POST /api/v1/ingest/url 404 in 29976ms
+ POST /api/v1/ingest/url 404 in 29968ms
+ POST /api/v1/ingest/url 404 in 29978ms
+ POST /api/v1/ingest/url 404 in 29986ms
+ POST /api/v1/ingest/url 404 in 29987ms
+ GET /api/v1/assets?project_id=proj-compliance-privacy 404 in 29991ms
+ POST /api/v1/ingest/url 404 in 29966ms
+ POST /api/v1/ingest/url 404 in 29960ms
+ POST /api/v1/ingest/url 404 in 29968ms
+ POST /api/v1/ingest/url 404 in 29979ms
+ POST /api/v1/ingest/url 404 in 29978ms

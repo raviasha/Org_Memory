@@ -924,7 +924,7 @@ Exit criteria: the ICO guidance URL from Project 2 corpus (`ico-guidance-legitim
 Deliverable: shared-folder or object-store ingestion.
 Exit criteria: at least one object-store or shared-folder source ingests and produces project-assigned asset records; Playwright API test covers storage connector ingest, asset record creation, and project assignment.
 
-8. - [ ] Session 8, UI Track: index dashboard early visibility.
+8. - [x] Session 8, UI Track: index dashboard early visibility.
 Deliverable: source inventory, indexing status, freshness indicators.
 Exit criteria: you can validate indexing progress after each ingestion session.
 
