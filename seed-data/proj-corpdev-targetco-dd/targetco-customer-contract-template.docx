@@ -1,0 +1,76 @@
+[SYNTHETIC DOCUMENT — DOCX placeholder for seed corpus]
+
+# TargetCo Standard Customer Contract Template
+**Document type:** Standard customer agreement template
+**Classification:** Restricted — Deal Team Only
+**Source:** TargetCo legal team (provided as part of DD data room)
+**Version:** v4.2
+
+---
+
+## MASTER SUBSCRIPTION AGREEMENT
+
+This Master Subscription Agreement ("Agreement") is entered into between **TargetCo Inc.** ("TargetCo") and the entity identified in the Order Form ("Customer").
+
+---
+
+## 1. Definitions
+
+- **"Subscription"**: the right to access and use the Services during the Subscription Term
+- **"Services"**: TargetCo's software-as-a-service platform as described in the applicable Order Form
+- **"Subscription Term"**: the period specified in the Order Form, typically 12 months
+- **"Customer Data"**: all data submitted by Customer or its users to the Services
+
+## 2. Subscription and Access
+
+2.1 TargetCo grants Customer a non-exclusive, non-transferable right to access and use the Services during the Subscription Term.
+
+2.2 Customer shall not sublicense, resell, or provide access to the Services to third parties without TargetCo's written consent.
+
+## 3. Fees and Payment
+
+3.1 Customer shall pay all fees specified in the applicable Order Form.
+
+3.2 Fees are due net-30 from invoice date.
+
+3.3 Unpaid amounts are subject to 1.5% monthly late charge.
+
+## 4. Auto-Renewal
+
+**4.1 IMPORTANT — Auto-Renewal Clause:** Unless either party provides written notice of non-renewal at least **90 days prior to the end of the then-current Subscription Term**, this Agreement and all active Order Forms will automatically renew for successive 12-month terms at TargetCo's then-current list price (which may be higher than the prior term's price).
+
+4.2 Price increases on auto-renewal are capped at 15% per year.
+
+## 5. Intellectual Property
+
+5.1 Customer retains all right, title, and interest in Customer Data.
+
+5.2 **IP Assignment Clause (Legal Concern):** Customer grants TargetCo a perpetual, irrevocable, worldwide license to use Customer Data for the purpose of improving TargetCo's products and services, including training machine learning models. Customer may opt out of ML training use by written notice.
+
+*[Deal team note: This IP assignment clause is broader than Acme's standard terms. Legal review required before customer contracts are transferred or novated.]*
+
+5.3 TargetCo retains all right, title, and interest in the Services, including all improvements developed based on Customer feedback.
+
+## 6. Confidentiality
+
+Both parties agree to treat the other's confidential information with the same care they use for their own (minimum reasonable care), and not to disclose it to third parties without consent, for a period of 3 years from disclosure.
+
+## 7. Warranties and Disclaimers
+
+7.1 TargetCo warrants that the Services will perform materially as described in the applicable documentation.
+
+7.2 EXCEPT AS EXPRESSLY SET FORTH HEREIN, THE SERVICES ARE PROVIDED "AS IS" WITHOUT WARRANTY.
+
+## 8. Limitation of Liability
+
+NEITHER PARTY SHALL BE LIABLE FOR INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES. EACH PARTY'S TOTAL LIABILITY IS LIMITED TO THE FEES PAID BY CUSTOMER IN THE 12 MONTHS PRECEDING THE CLAIM.
+
+## 9. Term and Termination
+
+9.1 This Agreement commences on the Order Form effective date and continues until all Order Forms expire or terminate.
+
+9.2 Either party may terminate for material breach if the breach is not cured within 30 days of written notice.
+
+---
+
+*[Due diligence note: The auto-renewal provision (Section 4.1) and IP assignment clause (Section 5.2) require legal review as part of the acquisition process. Notification requirements to customers upon change of control must be assessed.]*

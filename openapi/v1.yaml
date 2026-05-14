@@ -1,0 +1,1180 @@
+openapi: '3.1.0'
+info:
+  title: Org Memory API
+  version: '1.0.0'
+  description: >
+    API-first integration contract for the Org Memory Task Launcher prototype.
+    Third-party runtimes submit tasks and subtasks, receive curated memory
+    packages, and replay exact snapshots programmatically.
+
+servers:
+  - url: /api/v1
+    description: Default (relative, same origin)
+
+# ---------------------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        Supabase JWT. Include as `Authorization: Bearer <token>` on every
+        request. RLS policies filter results to the authenticated user's
+        ACL-entitled rows automatically.
+
+  # -------------------------------------------------------------------------
+  # Reusable parameters
+  # -------------------------------------------------------------------------
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema:
+        type: string
+        format: uuid
+      description: >
+        Client-generated UUID. When present the server treats repeated
+        requests with the same key as a replay and returns the cached
+        response instead of executing the operation again.
+
+    CursorParam:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: Opaque pagination cursor from a previous response `next_cursor` field.
+
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+      description: Maximum number of items to return in a single page.
+
+    SubtaskIdParam:
+      name: subtask_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    SnapshotIdParam:
+      name: snapshot_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    RunIdParam:
+      name: run_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    AssetIdParam:
+      name: asset_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    MemoryStoreIdParam:
+      name: memory_store_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+    # ------ Error ----------------------------------------------------------
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Human-readable error message.
+        code:
+          type: string
+          description: Machine-readable error code (snake_case).
+        details:
+          description: Optional structured context for the error.
+
+    # ------ ACL envelope ---------------------------------------------------
+    AclEnvelope:
+      type: object
+      required:
+        - acl_scope
+      properties:
+        acl_scope:
+          type: string
+          description: >
+            ACL scope string that gates RLS policy evaluation. Must match an
+            entitlement held by the authenticated caller.
+          example: org:acme:project:proj-eng-incident-ops
+
+    # ------ Pagination -----------------------------------------------------
+    PaginationMeta:
+      type: object
+      properties:
+        next_cursor:
+          type: string
+          nullable: true
+          description: Pass as `cursor` query param to fetch the next page. Null when exhausted.
+        has_more:
+          type: boolean
+        total_count:
+          type: integer
+          nullable: true
+
+    # ------ Caller context (submitted with a task) -------------------------
+    CallerContext:
+      type: object
+      properties:
+        caller_id:
+          type: string
+          description: Stable identifier for the calling system or user.
+        execution_provider:
+          type: string
+          enum: [claude, openai]
+          default: claude
+          description: >
+            LLM provider for the execution step. Memory store operations always
+            use Claude regardless of this value.
+        session_id:
+          type: string
+          format: uuid
+          description: Optional session grouping identifier.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Caller-defined key-value pairs preserved in the run snapshot.
+
+    # ------ Subtask plan item ----------------------------------------------
+    SubtaskPlanItem:
+      type: object
+      required:
+        - subtask_id
+        - title
+        - store_routing_summary
+      properties:
+        subtask_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        store_routing_summary:
+          type: object
+          description: Summary of memory stores selected for this subtask.
+          properties:
+            primary_store_id:
+              type: string
+              format: uuid
+            secondary_store_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+            attach_mode:
+              type: string
+              enum: [read_write, read_only]
+            estimated_token_budget:
+              type: integer
+
+    # ------ Curated memory bundle item ------------------------------------
+    MemoryBundleItem:
+      type: object
+      required:
+        - item_id
+        - memory_path
+        - content_excerpt
+        - relevance_score
+        - included
+      properties:
+        item_id:
+          type: string
+        memory_path:
+          type: string
+          description: Canonical memory path, e.g. `/assets/{asset_id}.md`.
+        content_excerpt:
+          type: string
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        included:
+          type: boolean
+          description: Whether this item was selected into the final context pack.
+        exclusion_reason:
+          type: string
+          nullable: true
+          description: Reason code when `included` is false.
+
+    # ------ Curation manifest ---------------------------------------------
+    CurationManifest:
+      type: object
+      required:
+        - manifest_id
+        - subtask_id
+        - snapshot_id
+        - selected_items
+        - dropped_items
+        - token_budget_used
+      properties:
+        manifest_id:
+          type: string
+          format: uuid
+        subtask_id:
+          type: string
+          format: uuid
+        snapshot_id:
+          type: string
+          format: uuid
+        selected_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryBundleItem'
+        dropped_items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemoryBundleItem'
+        token_budget_used:
+          type: integer
+        token_budget_limit:
+          type: integer
+        rationale:
+          type: string
+          description: Free-text curation rationale from the LLM.
+
+    # ------ Write intent --------------------------------------------------
+    WriteIntent:
+      type: object
+      required:
+        - memory_path
+        - operation
+        - content
+      properties:
+        memory_path:
+          type: string
+          description: Target canonical memory path.
+        operation:
+          type: string
+          enum: [create, update, delete]
+        content:
+          type: string
+          nullable: true
+          description: New content for create/update operations. Null for delete.
+        rationale:
+          type: string
+        provenance:
+          type: object
+          properties:
+            source_asset_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+            run_id:
+              type: string
+              format: uuid
+
+    WriteIntentResult:
+      type: object
+      required:
+        - memory_path
+        - status
+      properties:
+        memory_path:
+          type: string
+        status:
+          type: string
+          enum: [accepted, rejected, pending_review]
+        rejection_reason:
+          type: string
+          nullable: true
+        memory_version_id:
+          type: string
+          nullable: true
+
+    # ------ Snapshot ------------------------------------------------------
+    Snapshot:
+      type: object
+      required:
+        - snapshot_id
+        - subtask_id
+        - run_id
+        - created_at
+        - manifest
+      properties:
+        snapshot_id:
+          type: string
+          format: uuid
+        subtask_id:
+          type: string
+          format: uuid
+        run_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        manifest:
+          $ref: '#/components/schemas/CurationManifest'
+        explainability_metadata:
+          type: object
+          description: >
+            Stage-wise retrieval metadata: store selection rationale, shortlist
+            scores, deduplication log, and token budget accounting.
+          additionalProperties: true
+
+    # ------ Export asset descriptor ----------------------------------------
+    ExportAssetDescriptor:
+      type: object
+      required:
+        - asset_id
+        - file_path_or_url
+        - acl_scope
+      properties:
+        asset_id:
+          type: string
+          format: uuid
+        file_path_or_url:
+          type: string
+        acl_scope:
+          type: string
+        source_type:
+          type: string
+        normalized_text_available:
+          type: boolean
+        binary_ref:
+          type: string
+          nullable: true
+          description: Signed URL for binary original. Null when not applicable.
+        provenance_hash:
+          type: string
+          description: SHA-256 content hash of the canonical asset record.
+
+    # ------ Run event ------------------------------------------------------
+    RunEvent:
+      type: object
+      required:
+        - event_id
+        - run_id
+        - event_type
+        - occurred_at
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        run_id:
+          type: string
+          format: uuid
+        correlation_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - ingest_started
+            - ingest_completed
+            - ingest_failed
+            - curation_started
+            - curation_completed
+            - export_started
+            - export_completed
+            - write_intent_submitted
+            - write_intent_accepted
+            - write_intent_rejected
+        occurred_at:
+          type: string
+          format: date-time
+        actor:
+          type: string
+          description: Service or user identifier that emitted the event.
+        payload:
+          type: object
+          additionalProperties: true
+          description: Event-type-specific structured payload.
+
+    # ------ Asset representation ------------------------------------------
+    AssetRepresentation:
+      type: object
+      required:
+        - asset_id
+        - raw_location
+        - acl_scope
+        - ingested_at
+      properties:
+        asset_id:
+          type: string
+          format: uuid
+        raw_location:
+          type: string
+          description: File path or URL pointing to the immutable original.
+        normalized_text:
+          type: string
+          nullable: true
+          description: Text derivative used for curation and retrieval.
+        extraction_metadata:
+          type: object
+          nullable: true
+          description: >
+            Source-type-specific extraction data, e.g. OCR confidence, caption,
+            page count, table count.
+          additionalProperties: true
+        provenance_hash:
+          type: string
+          description: SHA-256 content hash.
+        acl_scope:
+          type: string
+        ingested_at:
+          type: string
+          format: date-time
+        last_modified_at:
+          type: string
+          format: date-time
+
+    # ------ Memory store activity -----------------------------------------
+    MemoryStoreActivity:
+      type: object
+      required:
+        - memory_store_id
+        - period_start
+        - period_end
+        - actions
+      properties:
+        memory_store_id:
+          type: string
+          format: uuid
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        total_reads:
+          type: integer
+        total_writes:
+          type: integer
+        actions:
+          type: array
+          items:
+            type: object
+            required:
+              - action_id
+              - action_type
+              - occurred_at
+              - reason_code
+            properties:
+              action_id:
+                type: string
+                format: uuid
+              action_type:
+                type: string
+                enum: [read, write, attach, detach]
+              memory_path:
+                type: string
+              occurred_at:
+                type: string
+                format: date-time
+              reason_code:
+                type: string
+              run_id:
+                type: string
+                format: uuid
+                nullable: true
+
+    # ------ Wiki graph ----------------------------------------------------
+    WikiGraphNode:
+      type: object
+      required:
+        - page_id
+        - slug
+        - title
+        - page_type
+      properties:
+        page_id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        title:
+          type: string
+        page_type:
+          type: string
+          enum: [summary, entity, concept, comparison, synthesis]
+        acl_scope:
+          type: string
+        updated_at:
+          type: string
+          format: date-time
+
+    WikiGraphEdge:
+      type: object
+      required:
+        - from_page_id
+        - to_page_id
+        - link_type
+      properties:
+        from_page_id:
+          type: string
+          format: uuid
+        to_page_id:
+          type: string
+          format: uuid
+        link_type:
+          type: string
+          enum: [wikilink, cross_reference, synthesis_source]
+
+    WikiGraph:
+      type: object
+      required:
+        - nodes
+        - edges
+      properties:
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikiGraphNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/WikiGraphEdge'
+        pagination:
+          $ref: '#/components/schemas/PaginationMeta'
+
+  # -------------------------------------------------------------------------
+  # Reusable responses
+  # -------------------------------------------------------------------------
+  responses:
+    400:
+      description: Bad request — validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Request body failed validation"
+            code: "validation_error"
+
+    401:
+      description: Unauthorized — missing or invalid Bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Authorization header missing or malformed"
+            code: "unauthorized"
+
+    403:
+      description: Forbidden — caller lacks ACL entitlement for the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Caller is not entitled to this ACL scope"
+            code: "forbidden"
+
+    404:
+      description: Not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+            code: "not_found"
+
+    422:
+      description: Unprocessable entity — request is well-formed but semantically invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Subtask does not belong to the specified task"
+            code: "unprocessable_entity"
+
+    429:
+      description: Rate limited.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Rate limit exceeded"
+            code: "rate_limited"
+
+    500:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "An unexpected error occurred"
+            code: "internal_error"
+
+# ---------------------------------------------------------------------------
+# Global security default — all endpoints require Bearer auth
+# ---------------------------------------------------------------------------
+security:
+  - bearerAuth: []
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # --------------------------------------------------------------------------
+  # Health
+  # --------------------------------------------------------------------------
+  /health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: Returns 200 when the service is healthy. Requires a valid Bearer token.
+      tags:
+        - Platform
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/401'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Tasks
+  # --------------------------------------------------------------------------
+  /tasks/curate:
+    post:
+      operationId: curateTask
+      summary: Submit a task and receive a subtask plan
+      description: >
+        Submit a task with caller context. The server parses the task, infers
+        intent and candidate project anchors, selects memory stores via the
+        routing catalog, and returns a subtask plan with a store routing summary
+        per subtask.
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AclEnvelope'
+                - type: object
+                  required:
+                    - task_title
+                  properties:
+                    task_title:
+                      type: string
+                      description: Short title for the task.
+                    task_description:
+                      type: string
+                      description: Full task description for the LLM.
+                    caller_context:
+                      $ref: '#/components/schemas/CallerContext'
+      responses:
+        '200':
+          description: Subtask plan created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - task_id
+                  - run_id
+                  - subtasks
+                properties:
+                  task_id:
+                    type: string
+                    format: uuid
+                  run_id:
+                    type: string
+                    format: uuid
+                  subtasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubtaskPlanItem'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Subtasks
+  # --------------------------------------------------------------------------
+  /subtasks/{subtask_id}/curate:
+    post:
+      operationId: curateSubtask
+      summary: Retrieve curated memory bundle for a subtask
+      description: >
+        Execute the two-phase curation pass for the given subtask: discovery
+        pass collects candidate memory paths and excerpts; curation pass
+        deduplicates, enforces token budget, and returns the final bundle with
+        rationale and an immutable snapshot_id.
+      tags:
+        - Subtasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SubtaskIdParam'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AclEnvelope'
+                - type: object
+                  properties:
+                    token_budget_override:
+                      type: integer
+                      description: Override default token budget limit for this curation pass.
+                    user_overrides:
+                      type: object
+                      description: >
+                        Optional user-specified include/exclude item IDs. Allows
+                        the first-party UI to apply user edits before execution.
+                      properties:
+                        force_include:
+                          type: array
+                          items:
+                            type: string
+                        force_exclude:
+                          type: array
+                          items:
+                            type: string
+      responses:
+        '200':
+          description: Curated memory bundle and snapshot.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - snapshot_id
+                  - manifest
+                  - assets
+                properties:
+                  snapshot_id:
+                    type: string
+                    format: uuid
+                  manifest:
+                    $ref: '#/components/schemas/CurationManifest'
+                  assets:
+                    type: array
+                    description: Canonical assets referenced in the curated bundle.
+                    items:
+                      $ref: '#/components/schemas/AssetRepresentation'
+                  rationale:
+                    type: string
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/500'
+
+  /subtasks/{subtask_id}/write-intents:
+    post:
+      operationId: submitWriteIntents
+      summary: Submit runtime memory write-back intents
+      description: >
+        Submit memory write-back intents produced by the execution runtime.
+        Each intent is evaluated against the write-back policy: `accepted`
+        intents are applied immediately; `rejected` intents are logged with a
+        reason code; `pending_review` intents are queued for operator approval.
+      tags:
+        - Subtasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SubtaskIdParam'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/AclEnvelope'
+                - type: object
+                  required:
+                    - run_id
+                    - intents
+                  properties:
+                    run_id:
+                      type: string
+                      format: uuid
+                    intents:
+                      type: array
+                      minItems: 1
+                      items:
+                        $ref: '#/components/schemas/WriteIntent'
+      responses:
+        '200':
+          description: Write-intent results.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - results
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WriteIntentResult'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '422':
+          $ref: '#/components/responses/422'
+        '429':
+          $ref: '#/components/responses/429'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Snapshots
+  # --------------------------------------------------------------------------
+  /snapshots/{snapshot_id}:
+    get:
+      operationId: getSnapshot
+      summary: Retrieve an exact curated snapshot
+      description: >
+        Retrieve the immutable curation snapshot for a given snapshot_id,
+        including the full manifest, explainability metadata, and the run
+        context. Supports exact replay of any past curation pass.
+      tags:
+        - Snapshots
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SnapshotIdParam'
+      responses:
+        '200':
+          description: Snapshot retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+
+  /snapshots/{snapshot_id}/export-assets:
+    get:
+      operationId: exportSnapshotAssets
+      summary: Retrieve controlled raw-asset export descriptors for a snapshot
+      description: >
+        Returns signed export descriptors for all raw assets included in the
+        snapshot's curated bundle. Descriptors contain the asset location,
+        provenance hash, and a time-limited signed URL for binary originals.
+        ACL enforcement applies — assets outside the caller's entitlement are
+        omitted silently.
+      tags:
+        - Snapshots
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/SnapshotIdParam'
+        - $ref: '#/components/parameters/CursorParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Export descriptors.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - snapshot_id
+                  - descriptors
+                properties:
+                  snapshot_id:
+                    type: string
+                    format: uuid
+                  descriptors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExportAssetDescriptor'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Runs
+  # --------------------------------------------------------------------------
+  /runs/{run_id}/events:
+    get:
+      operationId: getRunEvents
+      summary: Retrieve structured event timeline for a run
+      description: >
+        Returns the ordered event log for ingest, curation, export, and
+        write-intent processing for the given run_id. Supports both
+        real-time stream mode (SSE) and replay mode from persisted snapshots.
+        Paginated by cursor.
+      tags:
+        - Runs
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RunIdParam'
+        - $ref: '#/components/parameters/CursorParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - ingest_started
+              - ingest_completed
+              - ingest_failed
+              - curation_started
+              - curation_completed
+              - export_started
+              - export_completed
+              - write_intent_submitted
+              - write_intent_accepted
+              - write_intent_rejected
+          description: Filter events to a specific type.
+      responses:
+        '200':
+          description: Event timeline.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - run_id
+                  - events
+                properties:
+                  run_id:
+                    type: string
+                    format: uuid
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RunEvent'
+                  pagination:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Assets
+  # --------------------------------------------------------------------------
+  /assets/{asset_id}/representations:
+    get:
+      operationId: getAssetRepresentations
+      summary: Retrieve all representations of an asset
+      description: >
+        Returns the raw location pointer, normalized text derivative, extraction
+        metadata (OCR, caption, confidence for images; page count for PDFs),
+        and the provenance hash for the canonical asset record.
+      tags:
+        - Assets
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/AssetIdParam'
+      responses:
+        '200':
+          description: Asset representations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetRepresentation'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Memory Stores
+  # --------------------------------------------------------------------------
+  /memory-stores/{memory_store_id}/activity:
+    get:
+      operationId: getMemoryStoreActivity
+      summary: Retrieve per-store I/O activity summary
+      description: >
+        Returns read/write action summaries, attach/detach events, reason
+        codes, and per-action run_id linkage for the given memory store over
+        the requested time window. Supports pagination.
+      tags:
+        - Memory Stores
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/MemoryStoreIdParam'
+        - $ref: '#/components/parameters/CursorParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: period_start
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter to actions at or after this timestamp (ISO 8601).
+        - name: period_end
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+          description: Filter to actions at or before this timestamp (ISO 8601).
+      responses:
+        '200':
+          description: Memory store activity summary.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryStoreActivity'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          $ref: '#/components/responses/404'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Wiki
+  # --------------------------------------------------------------------------
+  /wiki/graph:
+    get:
+      operationId: getWikiGraph
+      summary: Retrieve the wiki index hierarchy and page-link graph
+      description: >
+        Returns all ACL-entitled wiki page nodes and their directional link
+        edges. Useful for rendering the LLM wiki explorer (index tree, page
+        graph, cross-reference view). Paginated by cursor on nodes; all edges
+        for the returned node set are included.
+      tags:
+        - Wiki
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CursorParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: page_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [summary, entity, concept, comparison, synthesis]
+          description: Filter nodes to a specific page type.
+        - name: acl_scope
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Narrow results to a specific ACL scope. Defaults to all entitled scopes.
+      responses:
+        '200':
+          description: Wiki graph.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WikiGraph'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'

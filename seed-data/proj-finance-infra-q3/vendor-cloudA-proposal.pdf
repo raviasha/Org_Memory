@@ -1,0 +1,57 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus]
+
+# CloudA Infrastructure Proposal — Acme Corp RFP Response
+
+**Vendor:** CloudA Solutions Inc.
+**Prepared for:** Acme Corp IT Procurement
+**Date:** March 25, 2026
+**Classification:** Confidential
+
+---
+
+## Executive Summary
+
+CloudA is pleased to submit this proposal in response to Acme Corp's IT Infrastructure RFP 2026. We offer a comprehensive cloud and managed infrastructure solution with industry-leading SLAs, full compliance certifications, and a proven migration methodology.
+
+## 5-Year Pricing Summary
+
+| Year | Cloud Compute | Cloud Storage | Networking | Support | Total |
+|------|--------------|---------------|------------|---------|-------|
+| Y1   | $1.8M        | $0.6M         | $0.4M      | $0.4M   | $3.2M |
+| Y2   | $1.0M        | $0.3M         | $0.2M      | $0.3M   | $1.8M |
+| Y3   | $0.9M        | $0.3M         | $0.2M      | $0.2M   | $1.6M |
+| Y4   | $0.9M        | $0.3M         | $0.1M      | $0.2M   | $1.5M |
+| Y5   | $0.9M        | $0.3M         | $0.1M      | $0.2M   | $1.5M |
+| **Total** | | | | | **$9.6M** |
+
+## SLA Commitments
+
+- Compute uptime: **99.99%** (less than 52 minutes downtime per year)
+- Storage uptime: **99.999%**
+- RTO for major outage: **15 minutes**
+- RPO: **5 minutes**
+- SLA breach penalty: 10% monthly service credit per 0.1% below SLA
+
+## Compliance Certifications
+
+- SOC 2 Type II: Certified (annual audit)
+- ISO 27001: Certified
+- FedRAMP Moderate: Authorized
+- GDPR: Full DPA available; Data residency in EU-West by default
+- HIPAA Business Associate Agreement: Available on request
+
+## Migration Plan
+
+**Phase 1 (Months 1–3):** Assessment, architecture design, pilot workload migration (20% of workloads)
+**Phase 2 (Months 4–6):** Core production migration (60% of workloads)
+**Phase 3 (Months 7–9):** Remaining workloads, cutover, and decommission of legacy
+
+Migration includes:
+- Dedicated CloudA migration architect (full-time for 9 months)
+- Migration tooling at no additional cost
+- Hypercare support for 90 days post-cutover
+- Free training for 10 Acme engineers (CloudA Certified Professional)
+
+## References
+
+Available on request. Three comparable migrations (enterprise, $8M–$15M TCO) completed in past 24 months.

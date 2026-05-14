@@ -1,0 +1,67 @@
+[SYNTHETIC DOCUMENT — XLSX placeholder for seed corpus]
+
+# Vendor Comparison Matrix — Infrastructure RFP Q3 FY26
+
+## Summary
+
+Comparative analysis of three vendors evaluated against Acme's IT Infrastructure RFP 2026.
+
+## Evaluation Criteria and Weights
+
+| Criterion              | Weight |
+|------------------------|--------|
+| Total Cost (5-year)    | 30%    |
+| Technical Capabilities | 25%    |
+| SLA Terms              | 20%    |
+| Security Compliance    | 15%    |
+| Migration Support      | 10%    |
+
+## Cost Comparison (5-Year TCO, $M)
+
+| Vendor  | Y1    | Y2    | Y3    | Y4    | Y5    | Total  |
+|---------|-------|-------|-------|-------|-------|--------|
+| CloudA  | 3.2   | 1.8   | 1.6   | 1.5   | 1.5   | 9.6    |
+| CloudB  | 2.9   | 1.7   | 1.5   | 1.4   | 1.4   | 8.9    |
+| CloudC  | 3.5   | 2.1   | 1.9   | 1.8   | 1.7   | 11.0   |
+
+## Technical Capabilities Score (out of 10)
+
+| Capability              | CloudA | CloudB | CloudC |
+|-------------------------|--------|--------|--------|
+| Compute scalability     | 9      | 8      | 9      |
+| Storage performance     | 8      | 9      | 7      |
+| Networking features     | 8      | 8      | 9      |
+| Managed services        | 9      | 7      | 8      |
+| Multi-region support    | 9      | 9      | 8      |
+| **Weighted avg**        | **8.6**| **8.2**| **8.2**|
+
+## SLA Terms
+
+| SLA Term                   | CloudA      | CloudB      | CloudC      |
+|----------------------------|-------------|-------------|-------------|
+| Compute uptime             | 99.99%      | 99.95%      | 99.99%      |
+| Storage uptime             | 99.999%     | 99.99%      | 99.99%      |
+| RTO (outage recovery)      | 15 min      | 30 min      | 15 min      |
+| Penalty rate               | 10% monthly | 5% monthly  | 10% monthly |
+| SLA audit frequency        | Monthly     | Quarterly   | Monthly     |
+
+## Security Compliance
+
+| Standard        | CloudA   | CloudB   | CloudC   |
+|-----------------|----------|----------|----------|
+| SOC 2 Type II   | Yes      | Yes      | Yes      |
+| ISO 27001       | Yes      | Yes      | No       |
+| FedRAMP         | Yes      | No       | Yes      |
+| GDPR DPA        | Yes      | Yes      | Yes      |
+
+## Overall Weighted Score
+
+| Vendor  | Cost  | Tech  | SLA   | Security | Migration | Total  |
+|---------|-------|-------|-------|----------|-----------|--------|
+| CloudA  | 7.5   | 8.6   | 9.0   | 9.5      | 8.0       | **8.4**|
+| CloudB  | 8.5   | 8.2   | 7.5   | 8.0      | 8.5       | **8.2**|
+| CloudC  | 6.5   | 8.2   | 8.5   | 7.0      | 7.0       | **7.5**|
+
+## Recommendation
+
+CloudA scores highest overall (8.4/10). CloudB is the most cost-effective option and a viable alternative if budget is constrained.

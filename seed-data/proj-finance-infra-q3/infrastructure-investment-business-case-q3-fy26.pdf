@@ -1,0 +1,47 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus]
+
+# Infrastructure Investment Business Case — Q3 FY26
+**Document type:** Business case / financial model
+**Classification:** Confidential
+**Author:** Finance & Strategy Team
+**Date:** April 2026
+
+---
+
+## Executive Summary
+
+This document presents the business case for Acme Corp's Q3 FY26 infrastructure modernization initiative. The proposed investment of $12.4M in cloud infrastructure migration and on-premises hardware refresh is projected to generate an NPV of $4.2M over a 5-year horizon at the CFO-mandated discount rate of 8.5%.
+
+## Investment Scope
+
+- Cloud migration: $7.2M (Years 1–2)
+- On-premises hardware refresh: $3.1M (Year 1)
+- Professional services and training: $1.4M (Year 1)
+- Contingency reserve (10%): $0.7M
+
+## 5-Year Cash Flow Projections
+
+| Year | CapEx ($M) | OpEx Savings ($M) | Revenue Enablement ($M) | Net Cash Flow ($M) |
+|------|-----------|-------------------|--------------------------|-------------------|
+| Y1   | -12.4      | 0.3               | 0.0                      | -12.1              |
+| Y2   | -0.5       | 1.8               | 0.5                      | 1.8                |
+| Y3   | 0.0        | 2.4               | 1.2                      | 3.6                |
+| Y4   | 0.0        | 2.4               | 2.0                      | 4.4                |
+| Y5   | 0.0        | 2.4               | 2.5                      | 4.9                |
+
+## NPV Calculation
+
+Discount rate: 8.5% (per CFO Q3 guidance memo)
+IRR: 14.2%
+Payback period: 3.4 years
+NPV (5-year, 8.5% discount): **$4.2M**
+
+## Risk Assumptions
+
+- Migration risk: Medium. Contingency covers up to 15% cost overrun.
+- Vendor lock-in: Mitigated by multi-cloud architecture.
+- Timeline risk: 6-month delay scenario reduces NPV by $0.9M (still positive).
+
+## Recommendation
+
+Proceed with the infrastructure investment. All financial hurdles are met at the CFO-specified discount rate. Board approval memo from Q2 FY26 covers the required capital envelope.

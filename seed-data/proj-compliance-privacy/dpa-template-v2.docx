@@ -1,0 +1,127 @@
+[SYNTHETIC DOCUMENT — DOCX placeholder for seed corpus]
+
+# Data Processing Agreement Template
+**Version:** 2.0
+**Owner:** Legal Team
+**Classification:** Confidential
+
+---
+
+## DATA PROCESSING AGREEMENT
+
+This Data Processing Agreement ("DPA") is entered into between:
+
+**Controller:** [COMPANY NAME] ("Controller"), and  
+**Processor:** Acme Corp, 1200 Technology Blvd, Suite 400 ("Processor")
+
+as a supplement to the [Master Services Agreement / Order Form] dated [DATE] ("Agreement").
+
+---
+
+## 1. Definitions
+
+- **"Personal Data"**: any information relating to an identified or identifiable natural person as defined under applicable Data Protection Law.
+- **"Data Protection Law"**: all applicable laws governing the processing of Personal Data including GDPR, CCPA/CPRA, and any national implementing legislation.
+- **"Processing"**: any operation performed on Personal Data.
+- **"Sub-processor"**: any third party engaged by Processor to process Personal Data on behalf of Controller.
+
+## 2. Processing Instructions
+
+2.1 Processor shall process Personal Data only on documented instructions from Controller, unless required by applicable law.
+
+2.2 The subject matter, nature, and purpose of processing are set out in Annex A.
+
+2.3 Processor shall immediately inform Controller if, in its opinion, an instruction infringes Data Protection Law.
+
+## 3. Confidentiality
+
+3.1 Processor shall ensure that persons authorized to process Personal Data have committed to confidentiality or are under a statutory obligation of confidentiality.
+
+## 4. Security
+
+4.1 Processor shall implement and maintain appropriate technical and organizational measures to ensure a level of security appropriate to the risk, including:
+- Encryption of Personal Data at rest (AES-256) and in transit (TLS 1.3)
+- Ongoing confidentiality, integrity, and availability of processing systems
+- Ability to restore availability and access to Personal Data in a timely manner after incidents
+- Regular testing and evaluation of technical and organizational measures
+
+4.2 Processor shall annually review and update security measures.
+
+## 5. Sub-processors
+
+5.1 Processor may engage Sub-processors listed in Annex B.
+
+5.2 Processor shall provide Controller with at least 30 days' notice of intended changes to Sub-processors.
+
+5.3 Processor shall impose equivalent data protection obligations on Sub-processors.
+
+## 6. Data Subject Rights
+
+6.1 Processor shall assist Controller in fulfilling obligations to respond to requests from data subjects exercising their rights under Data Protection Law.
+
+6.2 Response time: Processor will provide necessary information within 5 business days of Controller's request.
+
+## 7. Data Breach Notification
+
+7.1 Processor shall notify Controller without undue delay, and in any event within **48 hours**, after becoming aware of a Personal Data breach.
+
+7.2 Notification shall include:
+- Nature of the breach
+- Categories and approximate number of data subjects affected
+- Categories and approximate number of records affected
+- Likely consequences of the breach
+- Measures taken or proposed
+
+## 8. Data Protection Impact Assessment
+
+8.1 Processor shall provide reasonable assistance to Controller when carrying out DPIAs where required.
+
+## 9. Deletion or Return of Data
+
+9.1 Upon termination of the Agreement, Processor shall, at Controller's choice:
+- Delete all Personal Data, or
+- Return all Personal Data to Controller
+
+9.2 Deletion shall be completed within **30 days** of termination.
+
+9.3 Processor shall certify deletion in writing upon request.
+
+## 10. Audits
+
+10.1 Processor shall make available to Controller all information necessary to demonstrate compliance with this DPA.
+
+10.2 Processor shall allow for and contribute to audits and inspections, with 30 days' prior written notice.
+
+## 11. International Transfers
+
+11.1 Processor shall not transfer Personal Data outside the EEA unless:
+- The transfer is to a country with an EU adequacy decision, or
+- The transfer is subject to Standard Contractual Clauses (SCCs), or
+- Controller has provided prior written consent
+
+## ANNEX A — Processing Details
+
+| Field | Details |
+|-------|---------|
+| Subject matter | [FILL IN] |
+| Nature of processing | [FILL IN] |
+| Purpose | [FILL IN] |
+| Duration | For the term of the Agreement |
+| Type of Personal Data | [FILL IN] |
+| Categories of data subjects | [FILL IN] |
+
+## ANNEX B — Approved Sub-processors
+
+[SUB-PROCESSOR LIST TO BE ATTACHED]
+
+---
+
+**Signed on behalf of Controller:**  
+Name: _______________________  
+Title: ________________________  
+Date: ________________________  
+
+**Signed on behalf of Processor (Acme Corp):**  
+Name: _______________________  
+Title: ________________________  
+Date: ________________________

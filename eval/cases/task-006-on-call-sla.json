@@ -1,0 +1,20 @@
+{
+  "task_id": "task-006-on-call-sla",
+  "project_id": "proj-eng-incident-ops",
+  "task_text": "Who is on call for the API gateway this week? If we have a P1 incident right now, what is the required response time under our SLA commitments and who should we page?",
+  "required_asset_ids": [
+    "on-call-rotation-q2-2026",
+    "platform-sla-commitments"
+  ],
+  "relevant_asset_ids": [
+    "alert-thresholds-config",
+    "api-gateway-runbook"
+  ],
+  "distractor_asset_ids": [
+    "marketing-campaign-brief",
+    "q1-sales-report"
+  ],
+  "cross_project_stores": [],
+  "task_class": "incident-response",
+  "specificity_requirement": true
+}

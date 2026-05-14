@@ -1,0 +1,21 @@
+{
+  "task_id": "task-002-vendor-selection",
+  "project_id": "proj-finance-infra-q3",
+  "task_text": "We need to select a cloud infrastructure vendor from the three proposals we received. Summarize the key differences between the vendors and indicate which one best meets our requirements based on the RFP scoring rubric.",
+  "required_asset_ids": [
+    "vendor-comparison-matrix",
+    "it-infrastructure-rfp-2026"
+  ],
+  "relevant_asset_ids": [
+    "vendor-cloudA-proposal",
+    "vendor-cloudB-proposal",
+    "infrastructure-investment-business-case-q3-fy26"
+  ],
+  "distractor_asset_ids": [
+    "office-lease-renewal-2024",
+    "travel-expense-policy"
+  ],
+  "cross_project_stores": [],
+  "task_class": "vendor-evaluation",
+  "specificity_requirement": false
+}

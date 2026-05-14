@@ -1,0 +1,83 @@
+[SYNTHETIC DOCUMENT — PDF placeholder for seed corpus]
+
+# Vendor Data Handling Requirements
+**Version:** 1.4
+**Owner:** Procurement / Compliance Team
+**Classification:** Confidential
+**Effective:** October 2025
+
+---
+
+## 1. Purpose
+
+This document defines the minimum data handling requirements that all vendors must meet before being permitted to access, process, store, or transmit Acme Corp personal data or confidential information.
+
+## 2. Scope
+
+These requirements apply to all vendors, suppliers, contractors, and sub-processors who will:
+- Access Acme Corp systems or networks
+- Process personal data on behalf of Acme Corp
+- Store Acme Corp confidential data in their systems
+
+## 3. Mandatory Requirements (All Vendors)
+
+### 3.1 Security Certifications
+All vendors processing personal data or confidential information must hold at least one of:
+- SOC 2 Type II (annual report, current)
+- ISO 27001 (current certification)
+- Equivalent as approved by Acme Security team
+
+### 3.2 Encryption
+- All personal data must be encrypted at rest using AES-256 or equivalent
+- All data in transit must use TLS 1.2 or higher (TLS 1.3 preferred)
+- Encryption keys must be managed by the vendor with documented key rotation policy (minimum annual rotation)
+
+### 3.3 Access Controls
+- Role-based access control (RBAC) must be implemented
+- Multi-factor authentication (MFA) required for all systems handling Acme data
+- Privileged access must be logged and reviewed quarterly
+- Principle of least privilege enforced
+
+### 3.4 Data Handling
+- Personal data may only be processed for the specified purposes in the contract
+- Personal data may not be sold, shared with third parties, or used for vendor's own commercial purposes without written consent
+- Sub-processors must be disclosed and must meet the same requirements
+- Data must be retained only as long as necessary for the contracted purpose
+
+### 3.5 Data Residency
+- Default: Acme data must remain within the EU or UK unless written approval obtained
+- US data transfers: Standard Contractual Clauses (SCCs) required unless adequacy decision applies
+- Vendor must notify Acme of any change in data residency within 30 days
+
+### 3.6 Breach Notification
+- Vendor must notify Acme within **48 hours** of discovering a suspected or confirmed breach involving Acme data
+- Notification must include: nature of breach, data types affected, estimated scope, and containment actions taken
+- Full incident report required within 5 business days
+
+### 3.7 Right to Audit
+- Vendor must make relevant security documentation available upon request
+- Acme reserves the right to conduct on-site or remote security assessments with 30 days' notice
+- Third-party audit reports (e.g., SOC 2) must be provided annually
+
+## 4. Enhanced Requirements (Vendors Accessing Special-Category or Highly Confidential Data)
+
+For vendors processing special-category personal data (health, financial, biometric, etc.) or Acme Restricted data:
+- GDPR Data Processing Agreement (DPA) required using Acme standard template or equivalent
+- Annual security questionnaire mandatory
+- Penetration testing results must be provided annually
+- Dedicated security point of contact required
+
+## 5. Onboarding Process
+
+1. Vendor completes Acme Vendor Security Questionnaire
+2. Procurement reviews against these requirements
+3. Security Team reviews for technical requirements
+4. Legal reviews for DPA and contract clauses
+5. Compliance approves for data access
+6. Vendor added to approved vendor register
+
+For new analytics or data-processing vendors, see also the org-vendor-approval-process.md for the full procurement workflow.
+
+## 6. Annual Review
+
+All vendors with access to personal data undergo annual review for continued compliance with these requirements. Non-compliant vendors are placed on probation and must remediate within 90 days or have access revoked.

@@ -1,0 +1,20 @@
+{
+  "task_id": "task-003-dpa-drafting",
+  "project_id": "proj-compliance-privacy",
+  "task_text": "Draft the data processing agreement sections covering sub-processor management and data subject rights response obligations for a new analytics vendor. The DPA must comply with GDPR Article 28 requirements and incorporate our current compliance posture.",
+  "required_asset_ids": [
+    "dpa-template-v2",
+    "gdpr-compliance-checklist-v3"
+  ],
+  "relevant_asset_ids": [
+    "vendor-data-handling-requirements",
+    "data-retention-schedule"
+  ],
+  "distractor_asset_ids": [
+    "employee-handbook-2025",
+    "office-supplies-procurement"
+  ],
+  "cross_project_stores": [],
+  "task_class": "legal-drafting",
+  "specificity_requirement": true
+}

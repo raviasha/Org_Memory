@@ -1,0 +1,24 @@
+{
+  "task_id": "task-009-vendor-compliance",
+  "project_id": "proj-finance-infra-q3",
+  "task_text": "CloudB does not yet have FedRAMP certification. Does this create a compliance gap for us if we select them? Cross-reference our data classification policy and vendor data handling requirements to determine if CloudB can access the data classifications we intend to store in this infrastructure.",
+  "required_asset_ids": [
+    "vendor-cloudB-proposal",
+    "org-data-classification-policy",
+    "vendor-data-handling-requirements"
+  ],
+  "relevant_asset_ids": [
+    "vendor-comparison-matrix",
+    "org-vendor-approval-process",
+    "gdpr-compliance-checklist-v3"
+  ],
+  "distractor_asset_ids": [
+    "office-lease-renewal-2024"
+  ],
+  "cross_project_stores": [
+    "proj-compliance-privacy",
+    "proj-org-shared"
+  ],
+  "task_class": "vendor-compliance",
+  "specificity_requirement": true
+}

@@ -1,0 +1,135 @@
+# Alert Thresholds Configuration — Acme Platform Services
+# Version: 2.3
+# Last updated: 2026-03-22 (post INC-2026-0315 corrective action)
+# Owner: Platform Engineering
+# Classification: Internal
+
+services:
+
+  api-gateway:
+    alerts:
+      - name: APIGateway_502_Rate_High
+        metric: api.gateway.http_status_5xx_rate
+        condition: "rate > 0.01"  # >1% 502/503/5xx rate
+        window: 2m
+        severity: P1
+        notify: pagerduty-platform
+
+      - name: APIGateway_504_Rate_High
+        metric: api.gateway.timeout_rate
+        condition: "rate > 0.005"  # >0.5% timeout rate
+        window: 2m
+        severity: P1
+        notify: pagerduty-platform
+
+      - name: APIGateway_RateLimit_Triggered
+        metric: api.gateway.rate_limit_rejections
+        condition: "count > 100"
+        window: 1m
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: APIGateway_Cert_Expiry_Warning
+        metric: api.gateway.tls_cert_expiry_days
+        condition: "days < 30"
+        window: 1h
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: APIGateway_Cert_Expired
+        metric: api.gateway.tls_cert_expiry_days
+        condition: "days < 1"
+        window: 5m
+        severity: P1
+        notify: pagerduty-platform
+
+      - name: APIGateway_HighLatency_P99
+        metric: api.gateway.latency_p99_ms
+        condition: "p99 > 3000"  # 3 second p99
+        window: 5m
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: APIGateway_Config_Timeout_Invalid
+        metric: api.gateway.config.proxy_read_timeout_seconds
+        condition: "value < 10"  # Added 2026-03-22: catch misconfigured short timeouts
+        window: 1m
+        severity: P1
+        notify: pagerduty-platform
+
+  database:
+    alerts:
+      - name: DB_Connection_Pool_Exhaustion
+        metric: db.pool.connections_waiting
+        condition: "count > 5"
+        window: 2m
+        severity: P1
+        notify: pagerduty-platform
+        notes: "Added 2025-11-29 post INC-2025-1122"
+
+      - name: DB_Replication_Lag_High
+        metric: db.replication.lag_seconds
+        condition: "lag > 60"
+        window: 5m
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: DB_CPU_High
+        metric: db.cpu.utilization_percent
+        condition: "cpu > 80"
+        window: 10m
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: DB_Storage_Low
+        metric: db.storage.free_gb
+        condition: "free < 50"
+        window: 15m
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: DB_Primary_Failover
+        metric: db.failover.event_count
+        condition: "count > 0"
+        window: 1m
+        severity: P1
+        notify: pagerduty-platform
+
+  assets-service:
+    alerts:
+      - name: Assets_Ingest_Queue_Depth_High
+        metric: assets.ingest.queue_depth
+        condition: "depth > 500"
+        window: 5m
+        severity: P2
+        notify: slack-platform-alerts
+
+      - name: Assets_Storage_Write_Failure_Rate
+        metric: assets.storage.write_failure_rate
+        condition: "rate > 0.01"
+        window: 5m
+        severity: P1
+        notify: pagerduty-platform
+
+  background-jobs:
+    alerts:
+      - name: Jobs_DB_Connection_Count_High
+        metric: jobs.db.active_connections
+        condition: "count > 3"  # Background jobs capped at 3 connections
+        window: 2m
+        severity: P2
+        notify: slack-platform-alerts
+        notes: "Added 2025-12-01 post INC-2025-1122"
+
+global:
+  notification_channels:
+    pagerduty-platform:
+      type: pagerduty
+      service_key: "{{ env.PAGERDUTY_PLATFORM_KEY }}"
+    slack-platform-alerts:
+      type: slack
+      channel: "#platform-alerts"
+      webhook_url: "{{ env.SLACK_PLATFORM_WEBHOOK }}"
+
+  default_evaluation_interval: 30s
+  default_resolve_timeout: 5m

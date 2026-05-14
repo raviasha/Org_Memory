@@ -1,0 +1,19 @@
+{
+  "task_id": "task-008-valuation",
+  "project_id": "proj-corpdev-targetco-dd",
+  "task_text": "Based on the comparable transaction analysis, what is the implied valuation range for TargetCo? Apply the median and 75th percentile EV/ARR multiples to TargetCo's FY25 ARR and give a specific dollar range.",
+  "required_asset_ids": [
+    "comparable-transaction-analysis",
+    "targetco-financial-summary-fy25"
+  ],
+  "relevant_asset_ids": [
+    "targetco-ip-registry",
+    "targetco-key-risks-memo"
+  ],
+  "distractor_asset_ids": [
+    "acme-internal-roadmap-2026"
+  ],
+  "cross_project_stores": [],
+  "task_class": "financial-analysis",
+  "specificity_requirement": true
+}

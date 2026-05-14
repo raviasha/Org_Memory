@@ -1,0 +1,20 @@
+{
+  "task_id": "task-001-npv-recommendation",
+  "project_id": "proj-finance-infra-q3",
+  "task_text": "Our Q3 infrastructure investment proposal shows an IRR of 14.2% and a 5-year NPV of $4.2M. The CFO has set a discount rate of 8.5% and a hurdle rate of 12%. Should we proceed with the investment? Provide a specific recommendation with financial justification.",
+  "required_asset_ids": [
+    "infrastructure-investment-business-case-q3-fy26",
+    "cfo-q3-guidance"
+  ],
+  "relevant_asset_ids": [
+    "board-approval-memo-q2-fy26",
+    "infrastructure-depreciation-schedule"
+  ],
+  "distractor_asset_ids": [
+    "office-lease-renewal-2024",
+    "travel-expense-policy"
+  ],
+  "cross_project_stores": [],
+  "task_class": "financial-analysis",
+  "specificity_requirement": true
+}

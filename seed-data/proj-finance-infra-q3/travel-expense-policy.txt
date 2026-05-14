@@ -1,0 +1,42 @@
+ACME CORP TRAVEL AND EXPENSE POLICY
+Effective Date: January 1, 2025
+Classification: Internal
+
+[SYNTHETIC DOCUMENT — TXT placeholder for seed corpus — DISTRACTOR]
+
+1. PURPOSE
+This policy establishes guidelines for business travel and expense reimbursement for all Acme Corp employees.
+
+2. SCOPE
+This policy applies to all employees, contractors, and consultants incurring business expenses on behalf of Acme Corp.
+
+3. AIR TRAVEL
+- Economy class for flights under 6 hours.
+- Business class permitted for flights over 6 hours with VP approval.
+- Book at least 14 days in advance when possible.
+- Use the approved corporate travel portal (TripManager).
+
+4. HOTEL
+- Maximum $250/night in Tier 1 cities (San Francisco, New York, London).
+- Maximum $180/night in Tier 2 cities.
+- Use corporate rate when available.
+
+5. MEALS AND ENTERTAINMENT
+- Daily meal per diem: $75 (domestic), $100 (international).
+- Team meals: up to $50 per person, manager approval required.
+- Client entertainment: up to $150 per person, VP approval required.
+
+6. GROUND TRANSPORTATION
+- Use economy rideshare or public transit.
+- Rental cars require manager pre-approval.
+- Mileage reimbursement: current IRS rate.
+
+7. EXPENSE REPORTING
+- Submit all expenses within 30 days of travel.
+- Original receipts required for all expenses over $25.
+- Submit via Expensify with manager approval.
+
+8. PERSONAL EXPENSES
+Personal expenses are not reimbursable and must not be included in expense reports.
+
+[NOTE: This is a distractor document. Not relevant to infrastructure investment analysis.]
