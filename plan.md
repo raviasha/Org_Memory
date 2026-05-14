@@ -928,7 +928,7 @@ Exit criteria: at least one object-store or shared-folder source ingests and pro
 Deliverable: source inventory, indexing status, freshness indicators.
 Exit criteria: you can validate indexing progress after each ingestion session.
 
-8b. - [ ] Session 8b, UI/Data Integration Track: project and asset lifecycle controls.
+8b. - [x] Session 8b, UI/Data Integration Track: project and asset lifecycle controls.
 Deliverable: create project, select project, add asset, soft-delete asset with audit visibility across supported intake classes.
 Exit criteria: user can fully manage project-scoped assets in UI and every action emits auditable events. Specifically, the following Playwright E2E browser tests must pass — covering requirement Step 1 in full:
 - Create project: fill in project name and submit the create-project form; the new project appears in the project list with status "active".

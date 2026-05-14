@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "/projects", label: "Projects" },
   { href: "/assets", label: "Assets" },
   { href: "/wiki", label: "Wiki" },
+  { href: "/ingest", label: "Ingest Ops" },
 ] as const;
 
 export default function RootLayout({
