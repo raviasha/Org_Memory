@@ -920,7 +920,7 @@ Exit criteria: upload a PDF, a PNG, and a folder (using the `seed-data/proj-eng-
 Deliverable: page ingestion with section metadata and timestamps.
 Exit criteria: the ICO guidance URL from Project 2 corpus (`ico-guidance-legitimate-interests`) ingests successfully via URL scrape, produces a normalized text asset record assigned to `proj-compliance-privacy`, and is visible in UI; Playwright API test covers URL ingest, normalized text creation, and project assignment.
 
-7. - [ ] Session 7, Data Track: storage connector MVP.
+7. - [x] Session 7, Data Track: storage connector MVP.
 Deliverable: shared-folder or object-store ingestion.
 Exit criteria: at least one object-store or shared-folder source ingests and produces project-assigned asset records; Playwright API test covers storage connector ingest, asset record creation, and project assignment.
 
