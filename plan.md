@@ -960,7 +960,7 @@ Deliverable: implement Design Decision 10b — build and seed store-catalog wiki
 Exit criteria: given a test task anchored to a project, the routing function returns a ranked store list with per-store evidence targets and budget estimates; ACL-ineligible stores are absent from results; scoring is deterministic for the same input; budget-exceeded path triggers escalation rather than silent expansion; Playwright API test covers routing request, ACL filtering, cap enforcement, and budget-exceeded escalation path.
 
 #### Wave 2: Retrieval core and context control
-9. - [ ] Session 9, Retrieval Track: canonical metadata and file-evidence model.
+9. - [x] Session 9, Retrieval Track: canonical metadata and file-evidence model.
 Deliverable: unified asset and wiki-page/file evidence records with ACL, trust, hierarchy, provenance.
 Exit criteria: each selected evidence item resolves to wiki page slug and/or file path or URL with source lineage.
 

@@ -320,6 +320,103 @@ export interface RunEvent {
 }
 
 // ---------------------------------------------------------------------------
+// Evidence model  (Session 9 — canonical metadata and file-evidence model)
+// ---------------------------------------------------------------------------
+
+export type EvidenceType = "asset" | "wiki_page" | "hybrid";
+
+/**
+ * A unified evidence record that can represent a raw asset (Layer 1),
+ * a wiki page (Layer 2), or a hybrid item tied to both.
+ *
+ * Exit criteria: each item resolves to wiki_page_slug and/or file_path_or_url
+ * with full source lineage.
+ */
+export interface EvidenceItem {
+  evidence_id: string;
+  org_id: string;
+  project_id: string;
+  evidence_type: EvidenceType;
+
+  // ── Resolution fields ────────────────────────────────────────────────────
+  /** UUID of the backing asset row; null for wiki-only items. */
+  asset_id: string | null;
+  /** UUID of the backing wiki_pages row; null for asset-only items. */
+  wiki_page_id: string | null;
+  /** Slug of the wiki page (e.g. "proj-finance-infra-q3/npv-summary"). */
+  wiki_page_slug: string | null;
+  /** File path or scraped URL of the backing asset. */
+  file_path_or_url: string | null;
+
+  // ── Content metadata ─────────────────────────────────────────────────────
+  title: string;
+  /** First ~500 chars of normalized_text (assets) or content_md (wiki pages). */
+  summary_snippet: string;
+
+  // ── Retrieval classification ─────────────────────────────────────────────
+  retrieval_level: RetrievalLevel;
+  /** Heuristic source-authority score 0–1. */
+  trust_score: number;
+  keyword_hints: string[];
+
+  // ── ACL & governance ─────────────────────────────────────────────────────
+  acl_scope: string;
+
+  // ── Hierarchy & provenance ────────────────────────────────────────────────
+  /** e.g. "org:acme/proj-finance-infra-q3" */
+  hierarchy_path: string;
+  /**
+   * Ordered chain of IDs showing provenance:
+   *   asset items:    [project_id, asset_id]
+   *   wiki items:     [project_id, wiki_page_id, ...source_asset_ids]
+   */
+  lineage_chain: string[];
+  /** content_hash from the source asset; null for wiki-only items. */
+  provenance_hash: string | null;
+  /** All contributing asset IDs. */
+  source_asset_ids: string[];
+
+  // ── Timestamps ───────────────────────────────────────────────────────────
+  created_at: string;
+  updated_at: string;
+  last_refreshed_at: string;
+}
+
+/**
+ * Extended EvidenceItem returned by GET /v1/evidence/[evidence_id].
+ * Includes resolved source objects for full lineage inspection.
+ */
+export interface EvidenceItemResolved extends EvidenceItem {
+  lineage_resolved: {
+    asset: Pick<
+      Asset,
+      | "asset_id"
+      | "project_id"
+      | "source_type"
+      | "file_path_or_url"
+      | "acl_scope"
+      | "ingest_status"
+      | "content_hash"
+      | "ingested_at"
+    > | null;
+    wiki_page: Pick<
+      WikiPage,
+      | "page_id"
+      | "slug"
+      | "title"
+      | "page_type"
+      | "source_asset_ids"
+      | "acl_scope"
+      | "updated_at"
+    > | null;
+    contributing_assets: Pick<
+      Asset,
+      "asset_id" | "file_path_or_url" | "source_type" | "content_hash"
+    >[];
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Eval label schema (synthetic demo corpus)
 // ---------------------------------------------------------------------------
 
