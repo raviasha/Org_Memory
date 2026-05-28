@@ -1,30 +1,19 @@
 /**
- * POST /api/v1/ingest/upload — Session 5b
+ * POST /api/v1/ingest/upload — Sessions 5b / 8d
  *
- * Document and image upload ingest pipeline.
+ * Document and image upload ingest pipeline with Managed Agents memory write.
  *
- * Accepts multipart/form-data with a single file plus project metadata.
- * Produces:
- *   1. Normalized text derivative (reads text files directly; prototype stub
- *      for binary formats such as PDF/DOCX/XLSX/PPTX).
- *   2. Extraction metadata (mime_type, character_count for documents;
- *      ocr_text, caption, ocr_confidence for images).
- *   3. Binary original stored in Supabase Storage bucket "assets" with a
- *      deterministic path keyed to asset_id (signed URL returned in response).
- *   4. Canonical asset record in the `assets` table with provenance hash
- *      (SHA-256 of the file bytes), extraction_metadata, and optional_binary_ref.
- *
- * Prototype behaviour
- * -------------------
- * Real PDF/DOCX parsing and OCR are not executed in the prototype.  Instead:
- * - Text-based files (md, txt, csv, yml, yaml, json) have their content read
- *   directly as normalized_text.
- * - Binary document formats receive a stub: "[prototype-stub: <mime_type> —
- *   full extraction deferred to v2]".
- * - Image files receive a deterministic OCR stub derived from the filename,
- *   a canned caption, and a confidence score of 0 to signal the stub.
- * For real OCR (v2) replace `stubImageExtraction` / `extractDocumentText`
- * with a vision API call and keep the rest of the pipeline unchanged.
+ * Pipeline steps (Session 8d additions marked ★):
+ *   1. Normalize file bytes → text + extraction_metadata.
+ *   2. Store canonical asset record in Supabase assets table.
+ *   3. ★ Get or create project memory store (Anthropic or stub).
+ *   4. ★ Write canonical asset memory at /assets/{asset_id}.md with
+ *        required provenance fields. Retry up to MAX_MEMORY_RETRIES times
+ *        with exponential back-off. On exhaustion set ingest_status to
+ *        "blocked_on_memory_write" (asset record preserved, no data loss).
+ *   5. ★ Emit structured run_events for every memory operation attempt.
+ *   6. ★ Update wiki pages: create asset summary page, update root/index
+ *        and root/log.
  *
  * Request body (multipart/form-data):
  *   file        File    — the asset to ingest (required)
@@ -34,21 +23,39 @@
  *
  * Response 200:
  * {
- *   ingest_run_id:     string
- *   asset_id:          string
- *   source_type:       "document" | "image"
- *   filename:          string
- *   content_sha256:    string
- *   ingest_status:     "indexed"
- *   normalized_text:   string
- *   extraction_metadata: object
- *   binary_ref:        string | null    // storage path or signed URL
+ *   ingest_run_id:        string
+ *   asset_id:             string
+ *   source_type:          "document" | "image"
+ *   filename:             string
+ *   content_sha256:       string
+ *   ingest_status:        "indexed" | "blocked_on_memory_write"
+ *   normalized_text:      string
+ *   extraction_metadata:  object
+ *   binary_ref:           string | null
+ *   memory_store_id:      string | null   ★
+ *   memory_version_id:    string | null   ★
+ *   schema_version:       string          ★
  * }
  */
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as crypto from "node:crypto";
+import {
+  getOrCreateProjectStore,
+  writeAssetMemory,
+  emitMemoryEvent,
+} from "../../../../../lib/managed-memory";
+import { getSchemaVersion } from "../../../../../lib/schema-injection";
+
+// ---------------------------------------------------------------------------
+// Memory write constants
+// ---------------------------------------------------------------------------
+
+/** Maximum number of memory write attempts before giving up */
+const MAX_MEMORY_RETRIES = 3;
+/** Base delay in ms for exponential back-off between memory write retries */
+const MEMORY_RETRY_BASE_MS = 300;
 
 // ---------------------------------------------------------------------------
 // Auth helper (same pattern as other ingest routes)
@@ -335,6 +342,10 @@ export async function POST(request: NextRequest) {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   let binary_ref: string | null = null;
+  let memory_store_id: string | null = null;
+  let memory_version_id: string | null = null;
+  const schema_version = getSchemaVersion();
+  let final_ingest_status = "indexed";
 
   if (supabaseUrl && supabaseServiceKey) {
     try {
@@ -394,6 +405,7 @@ export async function POST(request: NextRequest) {
         parent_asset_id: null,
         lineage_metadata: { ingest_run_id, source_format: source_type },
         extraction_metadata,
+        ingest_run_id,
         ingested_at: now,
         last_modified_at: now,
       };
@@ -402,6 +414,125 @@ export async function POST(request: NextRequest) {
         .from("assets")
         .upsert(record, { onConflict: "asset_id" });
       if (insertErr) throw insertErr;
+
+      // -----------------------------------------------------------------------
+      // Session 8d: Managed Agents memory write
+      // -----------------------------------------------------------------------
+
+      // Step 1: Get or create the project memory store.
+      let storeResult: { local_store_id: string; anthropic_store_id: string } | null = null;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        storeResult = await getOrCreateProjectStore({
+          project_id,
+          org_id,
+          name: `Project memory — ${project_id}`,
+          description: `Canonical asset memories for project ${project_id}`,
+          acl_scope,
+          db: db as never,
+        });
+        memory_store_id = storeResult.local_store_id;
+      } catch (storeErr) {
+        // If we can't create/find a store, we still return the asset record
+        // but note the memory write did not happen.
+        console.warn("Memory store create/retrieve failed:", storeErr);
+      }
+
+      // Step 2: Write canonical asset memory with retry/back-off.
+      if (storeResult) {
+        const memoryPath = `/assets/${asset_id}.md`;
+
+        // Emit started event
+        await emitMemoryEvent({
+          event_type: "memory_write_started",
+          run_id: ingest_run_id,
+          asset_id,
+          local_store_id: storeResult.local_store_id,
+          anthropic_store_id: storeResult.anthropic_store_id,
+          path: memoryPath,
+          attempt: 1,
+          db: db as never,
+        });
+
+        let writeSucceeded = false;
+        for (let attempt = 1; attempt <= MAX_MEMORY_RETRIES; attempt++) {
+          try {
+            const writeResult = await writeAssetMemory({
+              local_store_id: storeResult.local_store_id,
+              anthropic_store_id: storeResult.anthropic_store_id,
+              asset_id,
+              project_id,
+              source_uri: filename,
+              acl_scope,
+              ingest_run_id,
+              normalized_text,
+              schema_version,
+              db: db as never,
+            });
+
+            memory_version_id = writeResult.memory_version_id;
+
+            // Update asset row with memory_version_id
+            await db
+              .from("assets")
+              .update({ memory_version_id: writeResult.memory_version_id })
+              .eq("asset_id", asset_id);
+
+            writeSucceeded = true;
+            break;
+          } catch (writeErr) {
+            const errMsg = writeErr instanceof Error ? writeErr.message : String(writeErr);
+            console.warn(`Memory write attempt ${attempt}/${MAX_MEMORY_RETRIES} failed:`, errMsg);
+
+            if (attempt < MAX_MEMORY_RETRIES) {
+              await emitMemoryEvent({
+                event_type: "memory_write_retry",
+                run_id: ingest_run_id,
+                asset_id,
+                local_store_id: storeResult.local_store_id,
+                anthropic_store_id: storeResult.anthropic_store_id,
+                path: memoryPath,
+                attempt: attempt + 1,
+                error: errMsg,
+                db: db as never,
+              });
+              // Exponential back-off: 300ms, 600ms, 1200ms
+              await new Promise((r) => setTimeout(r, MEMORY_RETRY_BASE_MS * Math.pow(2, attempt - 1)));
+            } else {
+              // Retry exhaustion — preserve asset record, mark as blocked
+              await emitMemoryEvent({
+                event_type: "memory_write_exhausted",
+                run_id: ingest_run_id,
+                asset_id,
+                local_store_id: storeResult.local_store_id,
+                anthropic_store_id: storeResult.anthropic_store_id,
+                path: memoryPath,
+                attempt,
+                error: errMsg,
+                db: db as never,
+              });
+              await db
+                .from("assets")
+                .update({ ingest_status: "blocked_on_memory_write" })
+                .eq("asset_id", asset_id);
+              final_ingest_status = "blocked_on_memory_write";
+            }
+          }
+        }
+
+        // Step 3: Update wiki pages if memory write succeeded.
+        if (writeSucceeded) {
+          await updateWikiPagesAfterIngest({
+            db: db as never,
+            asset_id,
+            filename,
+            project_id,
+            acl_scope,
+            ingest_run_id,
+            memory_version_id: memory_version_id!,
+          });
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return NextResponse.json(
@@ -421,9 +552,115 @@ export async function POST(request: NextRequest) {
     source_type,
     filename,
     content_sha256,
-    ingest_status: "indexed",
+    ingest_status: final_ingest_status,
     normalized_text,
     extraction_metadata,
     binary_ref,
+    memory_store_id,
+    memory_version_id,
+    schema_version,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Wiki update helper — Session 8d
+// ---------------------------------------------------------------------------
+
+interface WikiUpdateParams {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  db: any;
+  asset_id: string;
+  filename: string;
+  project_id: string;
+  acl_scope: string;
+  ingest_run_id: string;
+  memory_version_id: string;
+}
+
+async function updateWikiPagesAfterIngest(params: WikiUpdateParams): Promise<void> {
+  const { db, asset_id, filename, project_id, acl_scope, ingest_run_id, memory_version_id } = params;
+  const now = new Date().toISOString();
+  const pageSlug = `assets/${asset_id}/summary`;
+
+  try {
+    // 1. Create or update the asset summary wiki page.
+    const summaryContent = `# Asset Summary — ${filename}
+
+**Asset ID:** ${asset_id}
+**Project:** ${project_id}
+**Ingested:** ${now}
+**ACL scope:** ${acl_scope}
+**Ingest run:** ${ingest_run_id}
+**Memory version:** ${memory_version_id}
+
+## Summary
+This page is the compiled summary for asset \`${asset_id}\` (file: \`${filename}\`).
+It was auto-generated at ingest time by the Session 8d memory pipeline.
+
+## Source
+- File path: \`${filename}\`
+- Memory path: \`/assets/${asset_id}.md\`
+`;
+
+    await db.from("wiki_pages").upsert(
+      {
+        slug: pageSlug,
+        title: `Asset Summary — ${filename}`,
+        page_type: "summary",
+        content_md: summaryContent,
+        source_asset_ids: [asset_id],
+        acl_scope,
+        shaping_job_id: ingest_run_id,
+      },
+      { onConflict: "slug" },
+    );
+
+    // 2. Update root/index to reference the new page.
+    const { data: indexRows } = await db
+      .from("wiki_pages")
+      .select("page_id, content_md")
+      .eq("slug", "root/index");
+
+    const indexRow = (indexRows as Array<{ page_id: string; content_md: string }>)?.[0];
+    if (indexRow) {
+      const refLine = `| [[${pageSlug}]] | Asset Summary — ${filename} | summary | Auto-generated summary for ${asset_id} |`;
+      const updatedIndex = indexRow.content_md.includes(pageSlug)
+        ? indexRow.content_md
+        : indexRow.content_md + `\n${refLine}`;
+
+      await db
+        .from("wiki_pages")
+        .update({ content_md: updatedIndex, shaping_job_id: ingest_run_id })
+        .eq("page_id", indexRow.page_id);
+    }
+
+    // 3. Append to root/log.
+    const { data: logRows } = await db
+      .from("wiki_pages")
+      .select("page_id, content_md")
+      .eq("slug", "root/log");
+
+    const logRow = (logRows as Array<{ page_id: string; content_md: string }>)?.[0];
+    if (logRow) {
+      const logEntry = `
+## ${now} | ingest | ${ingest_run_id}
+
+**Run ID:** \`${ingest_run_id}\`
+**Event:** ingest
+**Summary:** Asset \`${asset_id}\` (${filename}) ingested and canonical memory written.
+**Assets affected:** \`${asset_id}\`
+**Pages created or updated:** [[${pageSlug}]], [[root/index]]
+**Memory version:** \`${memory_version_id}\`
+
+---`;
+      const updatedLog = logRow.content_md + logEntry;
+      await db
+        .from("wiki_pages")
+        .update({ content_md: updatedLog, shaping_job_id: ingest_run_id })
+        .eq("page_id", logRow.page_id);
+    }
+  } catch (wikiErr) {
+    // Wiki update failure is non-fatal — log and continue.
+    console.warn("Wiki update after ingest failed (non-fatal):", wikiErr);
+  }
 }
