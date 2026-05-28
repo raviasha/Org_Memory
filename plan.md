@@ -937,7 +937,7 @@ Exit criteria: user can fully manage project-scoped assets in UI and every actio
 - Remove file from project: trigger the remove action on an asset in the project workspace; the asset transitions to "deleted" state and the soft-delete audit entry (timestamp, actor, asset_id) is visible in the ingest operations screen.
 - Audit trail persistence: reload the project workspace after a delete action and confirm the deleted asset row remains visible in the audit view (not silently purged).
 
-8c. - [ ] Session 8c, Platform API Track: external API curation surface MVP.
+8c. - [x] Session 8c, Platform API Track: external API curation surface MVP.
 Deliverable: task and subtask curation endpoints plus snapshot read endpoint with ACL and idempotency.
 Exit criteria: third-party caller can request curated subtask bundles and replay exact snapshot output. Specifically, the following Playwright API tests must pass — covering requirement Steps 6, 7, and 8 in full:
 - Task creation and subtask generation (Step 6): `POST /v1/tasks/curate` with a task text anchored to a seeded project returns a subtask plan containing at least two subtasks; each subtask carries a candidate memory-store routing summary, an intent label, and expected evidence targets; the response includes an idempotency-safe task_id.
