@@ -964,13 +964,13 @@ Exit criteria: given a test task anchored to a project, the routing function ret
 Deliverable: unified asset and wiki-page/file evidence records with ACL, trust, hierarchy, provenance.
 Exit criteria: each selected evidence item resolves to wiki page slug and/or file path or URL with source lineage.
 
-10. - [ ] Session 10, Retrieval Track: Level 0 and Level 1 retrieval plus promotion gate.
+10. - [x] Session 10, Retrieval Track: Level 0 and Level 1 retrieval plus promotion gate.
 Constraint: the `semantic` component of `score_breakdown` must be produced without embeddings or vector indexes (v1 constraint from the Context Rationale Schema). Allowed methods: symbolic/lexical features, taxonomy or intent matches, and LLM-judged reranking over wiki pages and metadata only. Any embedding-based method is v2-only and requires an explicit plan amendment before implementation.
 Semantic scoring implementation rule: compute semantic scores offline per wiki-page update and cache the result; recompute only when relevant wiki pages are modified (cache invalidation trigger: `wiki_pages.updated_at` change for pages in the candidate set). This keeps the live retrieval path free of per-query LLM calls and compliant with low-cost prototype mode.
 Deliverable: (1) task router and ranker for summary and domain retrieval with offline-cached semantic scores; (2) promotion gate — implement the memory-derived output promotion flow: validate provenance resolves to canonical assets, pass ACL check, write accepted output into `wiki_pages` / `index` / `log` with `memory_version_id → asset_id` mapping persisted in canonical audit tables. The v1 promotion path is manual-trigger only (operator action or task close); no background scheduler is required.
 Exit criteria: top candidates returned with rationale and scores; no embedding model or vector index is invoked; semantic scores are read from cache, not computed live per query; a memory-derived output can be promoted into a wiki page with provenance and ACL check passing; `memory_version_id → asset_id` mapping is persisted in canonical audit tables; Playwright API test covers retrieval request with cached scores and one promotion flow scenario.
 
-11. - [ ] Session 11, Retrieval Track: Level 2 specific-file picker.
+11. - [x] Session 11, Retrieval Track: Level 2 specific-file picker.
 Deliverable: evidence selector enforcing specific-file inclusion when available.
 Exit criteria: NPV-style tasks include correct business-case file.
 

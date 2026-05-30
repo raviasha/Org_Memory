@@ -566,6 +566,182 @@ components:
         pagination:
           $ref: '#/components/schemas/PaginationMeta'
 
+    # ------ Ranked evidence item  (Session 10) ----------------------------
+    ScoreBreakdown:
+      type: object
+      required:
+        - intent_match
+        - trust_score
+        - freshness
+        - semantic_score
+        - level_boost
+        - composite
+      properties:
+        intent_match:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Rule-based keyword overlap score (0–1).
+        trust_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Static trust heuristic from evidence_items.trust_score.
+        freshness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Recency score decaying linearly to 0 at 180 days.
+        semantic_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Offline-cached content richness score (no live LLM or embedding).
+        level_boost:
+          type: number
+          format: float
+          minimum: 0
+          description: Level promotion bonus (+0.10 for level_0, +0.05 for level_1).
+        composite:
+          type: number
+          format: float
+          minimum: 0
+          description: >
+            Weighted composite:
+            0.40*intent_match + 0.25*trust_score + 0.20*freshness
+            + 0.15*semantic_score + level_boost, clamped to [0, 1].
+
+    RankedEvidenceItem:
+      type: object
+      required:
+        - evidence_id
+        - project_id
+        - evidence_type
+        - retrieval_level
+        - title
+        - summary_snippet
+        - acl_scope
+        - hierarchy_path
+        - lineage_chain
+        - keyword_hints
+        - score_breakdown
+        - rank_position
+        - rationale
+      properties:
+        evidence_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+        evidence_type:
+          type: string
+          enum: [asset, wiki_page, hybrid]
+        retrieval_level:
+          type: string
+          enum: [level_0, level_1, level_2]
+        title:
+          type: string
+        summary_snippet:
+          type: string
+        wiki_page_slug:
+          type: string
+          nullable: true
+        file_path_or_url:
+          type: string
+          nullable: true
+        acl_scope:
+          type: string
+        hierarchy_path:
+          type: string
+        lineage_chain:
+          type: array
+          items:
+            type: string
+        keyword_hints:
+          type: array
+          items:
+            type: string
+        score_breakdown:
+          $ref: '#/components/schemas/ScoreBreakdown'
+        rank_position:
+          type: integer
+          minimum: 1
+          description: 1-indexed rank position in the returned list.
+        rationale:
+          type: string
+          description: Human-readable explanation of why this item was ranked here.
+        semantic_score_cached_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            Timestamp when semantic_score was last computed offline.
+            Null only if the evidence item was created after the last
+            refresh_semantic_scores() call and has not yet been scored.
+
+    # ------ Promotion result  (Session 10) --------------------------------
+    PromotionResult:
+      type: object
+      required:
+        - promotion_id
+        - wiki_page_id
+        - wiki_page_slug
+        - asset_id
+        - memory_version_id
+        - project_id
+        - status
+        - promoted_at
+        - audit_entry
+      properties:
+        promotion_id:
+          type: string
+          format: uuid
+          description: Unique ID of this promotion audit record.
+        wiki_page_id:
+          type: string
+          format: uuid
+          description: ID of the wiki page created or updated.
+        wiki_page_slug:
+          type: string
+          description: Slug of the wiki page created or updated.
+        asset_id:
+          type: string
+          format: uuid
+          description: The asset this memory was derived from.
+        memory_version_id:
+          type: string
+          description: The Anthropic memory version ID used in provenance validation.
+        project_id:
+          type: string
+        status:
+          type: string
+          enum: [accepted]
+        promoted_at:
+          type: string
+          format: date-time
+        audit_entry:
+          type: object
+          required:
+            - memory_version_id
+            - asset_id
+            - wiki_page_id
+          properties:
+            memory_version_id:
+              type: string
+            asset_id:
+              type: string
+              format: uuid
+            wiki_page_id:
+              type: string
+              format: uuid
+          description: >
+            Immutable audit record persisted in promotion_audit table.
+            Maps memory_version_id → asset_id → wiki_page_id.
+
   # -------------------------------------------------------------------------
   # Reusable responses
   # -------------------------------------------------------------------------
@@ -1176,5 +1352,206 @@ paths:
           $ref: '#/components/responses/401'
         '403':
           $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Retrieval  (Session 10)
+  # --------------------------------------------------------------------------
+  /retrieval:
+    post:
+      operationId: rankEvidence
+      summary: Rank Level 0 and Level 1 evidence for a task
+      description: >
+        Given free-form task text, infer intent classes via rule-based keyword
+        matching, then return evidence items ranked by composite score
+        (intent match + trust + freshness + offline-cached semantic score).
+        Focuses on Level 0 (index / summary pages) and Level 1 (entity /
+        concept / store-catalog pages) by default.  No per-query LLM calls,
+        no embedding models, no vector indexes.  Semantic scores are read from
+        the evidence_items cache and refreshed only when backing wiki pages
+        are modified.
+      tags:
+        - Retrieval
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - task_text
+              properties:
+                task_text:
+                  type: string
+                  description: Free-form task description used to infer intent and rank evidence.
+                project_id:
+                  type: string
+                  description: Scope evidence retrieval to a specific project.
+                retrieval_levels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [level_0, level_1, level_2]
+                  default: [level_0, level_1]
+                  description: >
+                    Retrieval levels to include.  Defaults to [level_0, level_1].
+                    Level 2 (specific files) can be included but ranks below higher
+                    levels unless the composite score is very high.
+                acl_scope:
+                  type: string
+                  description: Filter results to a specific ACL scope.
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 200
+                  default: 20
+                  description: Maximum number of ranked items to return.
+      responses:
+        '200':
+          description: Ranked evidence list.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - task_text
+                  - intent_classes
+                  - total_candidates
+                  - items
+                  - retrieval_levels_included
+                  - scores_from_cache
+                properties:
+                  task_text:
+                    type: string
+                  project_id:
+                    type: string
+                    nullable: true
+                  intent_classes:
+                    type: array
+                    items:
+                      type: string
+                    description: Detected intent classes (e.g. financial_analysis, risk_assessment).
+                  total_candidates:
+                    type: integer
+                    description: Total evidence rows considered before limit was applied.
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RankedEvidenceItem'
+                  retrieval_levels_included:
+                    type: array
+                    items:
+                      type: string
+                    description: Unique retrieval levels present in the returned items.
+                  scores_from_cache:
+                    type: boolean
+                    description: >
+                      Always true — semantic scores are read from the
+                      evidence_items cache, never computed live per query.
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '500':
+          $ref: '#/components/responses/500'
+
+  # --------------------------------------------------------------------------
+  # Promotions  (Session 10)
+  # --------------------------------------------------------------------------
+  /promotions:
+    post:
+      operationId: promoteMemoryOutput
+      summary: Promote a memory-derived output into a canonical wiki page
+      description: >
+        Validates provenance (memory_version_id → asset_id), performs an ACL
+        check, writes or updates a wiki_pages row, appends to log.md, updates
+        index.md, and persists a promotion_audit record with the
+        memory_version_id → asset_id → wiki_page_id mapping.  Idempotent on
+        slug — a second promotion with the same slug updates rather than
+        duplicates.  v1 manual-trigger only; no background scheduler.
+      tags:
+        - Promotions
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - memory_version_id
+                - asset_id
+                - project_id
+                - content_md
+                - title
+                - page_type
+                - acl_scope
+              properties:
+                memory_version_id:
+                  type: string
+                  description: >
+                    The Anthropic memory version ID from the canonical asset
+                    memory write (e.g. memver_...).  Must resolve to the
+                    provided asset_id.
+                asset_id:
+                  type: string
+                  format: uuid
+                  description: The asset this memory was derived from (provenance validation).
+                project_id:
+                  type: string
+                  description: Target project scope for the promoted wiki page.
+                content_md:
+                  type: string
+                  description: Markdown content for the wiki page.
+                title:
+                  type: string
+                  description: Title for the wiki page.
+                page_type:
+                  type: string
+                  enum: [summary, entity, concept, comparison, synthesis]
+                  description: Wiki page type.
+                acl_scope:
+                  type: string
+                  description: ACL scope for the new or updated wiki page.
+                triggered_by:
+                  type: string
+                  default: operator
+                  description: What triggered the promotion ('operator' | 'task_close' | 'manual').
+                run_id:
+                  type: string
+                  format: uuid
+                  description: Optional run ID for event correlation.
+                slug:
+                  type: string
+                  description: >
+                    Optional explicit slug.  When omitted a slug is derived
+                    from the project_id and title.
+      responses:
+        '201':
+          description: Promotion accepted — wiki page written and audit record persisted.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionResult'
+        '400':
+          $ref: '#/components/responses/400'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/403'
+        '404':
+          description: Asset not found or memory_version_id provenance mismatch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/422'
         '500':
           $ref: '#/components/responses/500'
