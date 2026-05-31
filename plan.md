@@ -974,28 +974,28 @@ Exit criteria: top candidates returned with rationale and scores; no embedding m
 Deliverable: evidence selector enforcing specific-file inclusion when available.
 Exit criteria: NPV-style tasks include correct business-case file.
 
-12. - [ ] Session 12, Retrieval Track: context assembler, budget caps, and cross-store deduplication.
+12. - [x] Session 12, Retrieval Track: context assembler, budget caps, and cross-store deduplication.
 Deliverable: deterministic context pack with token budgets by level. Cross-store deduplication: after multi-store reads, identify overlapping facts and retain one canonical evidence item per concept in the final context pack; dropped duplicates are logged in the curation manifest with deduplication reason. Curation manifest must record selected item IDs, dropped item IDs, deduplication reasons, and budget usage for every context pack produced.
 Exit criteria: hard budget enforcement and stable pack ordering; cross-project Task 9 (vendor compliance, 3-store input) produces a deduplicated final pack with no duplicate evidence items; curation manifest is persisted and queryable; Playwright API test validates deduplication output for a two-store input case.
 
-13. - [ ] Session 13, UI Track: context review and override UX.
+13. - [x] Session 13, UI Track: context review and override UX.
 Deliverable: inspect, add, remove, and confirm context items.
 Exit criteria: user edits persist and are reflected in final payload.
 
-14. - [ ] Session 14, UI Track: explainability and non-inclusion panel.
+14. - [x] Session 14, UI Track: explainability and non-inclusion panel.
 Deliverable: inclusion reasons and excluded-item reason codes.
 Exit criteria: every included item and top excluded items are explainable in UI.
 
 #### Wave 3: Execution, governance, and cost control
-15. - [ ] Session 15, Runtime Track: provider adapter abstraction.
+15. - [x] Session 15, Runtime Track: provider adapter abstraction.
 Deliverable: unified execution path with Claude and OpenAI adapters. Document and enforce the dual-API-key requirement: even when OpenAI is selected as the execution provider, a Claude API key is required for all memory store operations (ingest, canonical asset memory writes, store attach/detach). The UI must surface this constraint during provider selection and API key configuration — users selecting OpenAI must be shown that a Claude key is also required for the memory path. The provider abstraction layer must record this constraint in code comments and update the tech stack doc.
 Exit criteria: same context pack runs against both providers; UI provider selection screen displays the dual-key requirement when OpenAI is chosen; attempting to run an OpenAI-provider task without a configured Claude key returns a clear error before execution starts; Playwright E2E test covers provider switch, dual-key validation, and missing-key error path.
 
-16. - [ ] Session 16, Governance Track: snapshot and audit trail.
+16. - [x] Session 16, Governance Track: snapshot and audit trail.
 Deliverable: immutable context snapshot ID and run trace.
 Exit criteria: each run is reproducible from snapshot and rationale metadata.
 
-16b. - [ ] Session 16b, Governance Track: restricted-best-match and signed-trace enforcement.
+16b. - [x] Session 16b, Governance Track: restricted-best-match and signed-trace enforcement.
 Deliverable: escalation flow when only low-confidence or ACL-restricted evidence is available, plus immutable or signed trace verification path.
 Exit criteria: restricted-best-match cases are surfaced with reason codes and trace signatures validate in replay.
 

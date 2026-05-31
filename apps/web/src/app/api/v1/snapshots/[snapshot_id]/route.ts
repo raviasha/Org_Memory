@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { fallbackStore } from "../../../../../lib/task-decomposer";
+import { fallbackStore, getEventsBySnapshotId } from "../../../../../lib/task-decomposer";
 
 // ---------------------------------------------------------------------------
 // Auth helper
@@ -69,7 +69,14 @@ export async function GET(
         org_id: data.org_id,
         project_id: data.project_id,
         task_id: data.task_id,
+        subtask_id: data.subtask_id ?? null,
         context_pack_json: data.context_pack_json,
+        content_hash: data.content_hash ?? null,
+        /** Session 16b: HMAC trace signature */
+        trace_signature: data.trace_signature ?? null,
+        /** Session 16b: restricted-best-match escalation info */
+        escalation_info: data.escalation_info ?? null,
+        run_events_snapshot: data.run_events_snapshot ?? [],
         created_at: data.created_at,
       });
     } catch (err) {
@@ -93,7 +100,16 @@ export async function GET(
     org_id: snap.org_id,
     project_id: snap.project_id,
     task_id: snap.task_id,
+    subtask_id: snap.subtask_id,
     context_pack_json: snap.context_pack_json,
+    content_hash: snap.content_hash,
+    /** Session 16b: HMAC trace signature */
+    trace_signature: snap.trace_signature ?? null,
+    /** Session 16b: restricted-best-match escalation info */
+    escalation_info: snap.context_pack_json?.escalation ?? null,
+    run_events_snapshot: snap.run_events_snapshot?.length
+      ? snap.run_events_snapshot
+      : getEventsBySnapshotId(snapshotId),
     created_at: snap.created_at,
   });
 }

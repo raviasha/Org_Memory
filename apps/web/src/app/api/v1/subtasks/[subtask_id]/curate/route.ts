@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
   buildCuratedBundle,
+  buildCurationEvents,
+  computeContentHash,
+  computeTraceSignature,
+  emitRunEvents,
   fallbackStore,
   SnapshotRecord,
   SubtaskPlan,
@@ -104,6 +108,21 @@ export async function POST(
       const bundle = buildCuratedBundle(subtaskPlan, subtaskRow.project_id);
       const snapshotId = randomUUID();
       const runId = `run-${subtaskRow.task_id}`;
+      const contentHash = computeContentHash(bundle);
+      // Session 16b: compute HMAC trace signature
+      const traceSignature = computeTraceSignature(snapshotId, contentHash, now);
+
+      // Build and emit run events for this curation pass
+      const events = buildCurationEvents(
+        runId,
+        subtaskRow.task_id,
+        subtaskId,
+        snapshotId,
+        bundle,
+        subtaskRow.intent_label,
+        now,
+      );
+      emitRunEvents(runId, events);
 
       // Write snapshot
       await supabase.from("run_snapshots").insert({
@@ -112,7 +131,12 @@ export async function POST(
         org_id: "00000000-0000-0000-0000-000000000001",
         project_id: subtaskRow.project_id,
         task_id: subtaskRow.task_id,
+        subtask_id: subtaskId,
         context_pack_json: bundle,
+        content_hash: contentHash,
+        trace_signature: traceSignature,
+        escalation_info: bundle.escalation ?? null,
+        run_events_snapshot: events,
         created_at: now,
       });
 
@@ -126,6 +150,10 @@ export async function POST(
         subtask_id: subtaskId,
         task_id: subtaskRow.task_id,
         snapshot_id: snapshotId,
+        run_id: runId,
+        content_hash: contentHash,
+        trace_signature: traceSignature,
+        escalation: bundle.escalation ?? null,
         ...bundle,
         created_at: now,
       });
@@ -175,6 +203,21 @@ export async function POST(
   const bundle = buildCuratedBundle(subtaskRecord, subtaskRecord.project_id);
   const snapshotId = `snap-${randomUUID()}`;
   const runId = `run-${subtaskRecord.task_id}`;
+  const contentHash = computeContentHash(bundle);
+  // Session 16b: compute HMAC trace signature
+  const traceSignature = computeTraceSignature(snapshotId, contentHash, now);
+
+  // Emit run events first so we can capture them in the snapshot
+  const events = buildCurationEvents(
+    runId,
+    subtaskRecord.task_id,
+    subtaskId,
+    snapshotId,
+    bundle,
+    subtaskRecord.intent_label,
+    now,
+  );
+  emitRunEvents(runId, events);
 
   const snapshotRecord: SnapshotRecord = {
     snapshot_id: snapshotId,
@@ -184,6 +227,9 @@ export async function POST(
     task_id: subtaskRecord.task_id,
     subtask_id: subtaskId,
     context_pack_json: bundle,
+    content_hash: contentHash,
+    trace_signature: traceSignature,
+    run_events_snapshot: events,
     created_at: now,
   };
 
@@ -196,6 +242,10 @@ export async function POST(
     subtask_id: subtaskId,
     task_id: subtaskRecord.task_id,
     snapshot_id: snapshotId,
+    run_id: runId,
+    content_hash: contentHash,
+    trace_signature: traceSignature,
+    escalation: bundle.escalation ?? null,
     ...bundle,
     created_at: now,
   });

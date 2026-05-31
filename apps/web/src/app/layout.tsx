@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/wiki", label: "Wiki" },
   { href: "/ingest", label: "Ingest Ops" },
   { href: "/tasks", label: "Tasks" },
+  { href: "/explainability", label: "Explainability" },
 ] as const;
 
 export default function RootLayout({

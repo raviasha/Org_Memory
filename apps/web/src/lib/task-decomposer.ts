@@ -9,6 +9,202 @@
  * deterministic for a given (task_text, project_id) pair.
  */
 
+import { createHash, createHmac, timingSafeEqual } from "crypto";
+
+// ---------------------------------------------------------------------------
+// Session 16: content hash utility
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute a deterministic SHA-256 hex digest of any JSON-serialisable value.
+ * Keys are sorted for stability so the hash is independent of insertion order.
+ */
+export function computeContentHash(value: unknown): string {
+  const canonical = JSON.stringify(value, Object.keys(value as object).sort());
+  return createHash("sha256").update(canonical, "utf8").digest("hex");
+}
+
+// ---------------------------------------------------------------------------
+// Session 16b: trace signing and restricted-best-match escalation
+// ---------------------------------------------------------------------------
+
+/**
+ * HMAC-SHA256 signing key for snapshot trace signatures.
+ * In production this MUST be set via the SNAPSHOT_SIGNING_KEY environment
+ * variable and kept secret. The dev fallback is intentionally labelled so
+ * operators know it is not production-safe.
+ */
+const SNAPSHOT_SIGNING_KEY =
+  process.env.SNAPSHOT_SIGNING_KEY ?? "dev-signing-key-not-for-production";
+
+/**
+ * Compute an HMAC-SHA256 trace signature for a snapshot.
+ * Payload: `${snapshot_id}:${content_hash}:${created_at}`
+ */
+export function computeTraceSignature(
+  snapshotId: string,
+  contentHash: string,
+  createdAt: string,
+): string {
+  const payload = `${snapshotId}:${contentHash}:${createdAt}`;
+  return createHmac("sha256", SNAPSHOT_SIGNING_KEY)
+    .update(payload, "utf8")
+    .digest("hex");
+}
+
+/**
+ * Verify a trace signature using constant-time comparison to prevent
+ * timing attacks.
+ */
+export function verifyTraceSignature(
+  snapshotId: string,
+  contentHash: string,
+  createdAt: string,
+  signature: string,
+): boolean {
+  try {
+    const expected = computeTraceSignature(snapshotId, contentHash, createdAt);
+    const expectedBuf = Buffer.from(expected, "hex");
+    const actualBuf = Buffer.from(signature, "hex");
+    if (expectedBuf.length !== actualBuf.length) return false;
+    return timingSafeEqual(expectedBuf, actualBuf);
+  } catch {
+    return false;
+  }
+}
+
+/** Machine-readable escalation reason codes for restricted-best-match cases. */
+export type EscalationCode =
+  | "low_confidence"        // all selected items score below LOW_CONFIDENCE_THRESHOLD
+  | "acl_restricted"        // the only available items required restricted ACL access
+  | "empty_evidence"        // no items could be selected at all
+  | "restricted_best_match"; // best available evidence is both restricted and low-confidence
+
+export interface EscalationInfo {
+  /** Whether escalation was triggered for this curation pass */
+  escalated: boolean;
+  /** Primary machine-readable reason code */
+  primary_reason_code: EscalationCode | null;
+  /** All applicable reason codes */
+  reason_codes: EscalationCode[];
+  /** Human-readable explanation surfaced in UI */
+  description: string;
+  /** Mean confidence score across selected items (null if no items selected) */
+  avg_confidence: number | null;
+  /** Whether ACL-restricted items appeared in the dropped list */
+  acl_items_present: boolean;
+}
+
+/** Confidence score below which all-selected evidence triggers escalation. */
+export const LOW_CONFIDENCE_THRESHOLD = 0.4;
+
+/** Confidence score below which ACL-restricted evidence triggers restricted_best_match. */
+export const RESTRICTED_BEST_MATCH_THRESHOLD = 0.6;
+
+/**
+ * Inspect a curated bundle and determine whether the restricted-best-match
+ * escalation path should be triggered.
+ */
+export function detectEscalation(bundle: CuratedBundle): EscalationInfo {
+  const selected = bundle.selected_items;
+  const trace = bundle.rationale_trace;
+
+  const hasAclRestrictedDropped = bundle.dropped_items.some((d) => {
+    const lower = d.exclusion_reason.toLowerCase();
+    return (
+      lower.includes("acl") ||
+      lower.includes("restricted") ||
+      lower.includes("access denied") ||
+      lower.includes("permission")
+    );
+  });
+
+  if (selected.length === 0) {
+    return {
+      escalated: true,
+      primary_reason_code: "empty_evidence",
+      reason_codes: ["empty_evidence"],
+      description:
+        "No evidence items could be selected for this subtask. " +
+        "All candidates were filtered by ACL policies or budget constraints. " +
+        "Manual evidence addition or escalation to a privileged reviewer is required.",
+      avg_confidence: null,
+      acl_items_present: hasAclRestrictedDropped,
+    };
+  }
+
+  // Compute mean confidence from rationale trace entries matching selected items
+  const scores = trace
+    .filter((r) => selected.some((s) => s.item_id === r.item_id))
+    .map((r) => r.score);
+
+  const avgConfidence =
+    scores.length > 0
+      ? scores.reduce((sum, s) => sum + s, 0) / scores.length
+      : null;
+
+  const allLowConfidence =
+    avgConfidence !== null && avgConfidence < LOW_CONFIDENCE_THRESHOLD;
+  const someLowConfidence =
+    avgConfidence !== null && avgConfidence < RESTRICTED_BEST_MATCH_THRESHOLD;
+
+  const reasonCodes: EscalationCode[] = [];
+
+  if (allLowConfidence) reasonCodes.push("low_confidence");
+  if (hasAclRestrictedDropped && someLowConfidence) {
+    reasonCodes.push("acl_restricted");
+    reasonCodes.push("restricted_best_match");
+  } else if (hasAclRestrictedDropped) {
+    reasonCodes.push("acl_restricted");
+  }
+
+  const escalated = reasonCodes.length > 0;
+
+  return {
+    escalated,
+    primary_reason_code: escalated ? reasonCodes[0] : null,
+    reason_codes: reasonCodes,
+    description: escalated
+      ? buildEscalationDescription(reasonCodes, avgConfidence)
+      : "Evidence quality is sufficient for this subtask.",
+    avg_confidence: avgConfidence,
+    acl_items_present: hasAclRestrictedDropped,
+  };
+}
+
+function buildEscalationDescription(
+  codes: EscalationCode[],
+  avgConfidence: number | null,
+): string {
+  const parts: string[] = [];
+
+  if (codes.includes("restricted_best_match")) {
+    parts.push(
+      "Restricted-best-match: the only available evidence is both ACL-restricted and below " +
+        `confidence threshold (avg score: ${avgConfidence?.toFixed(2) ?? "n/a"}).`,
+    );
+    parts.push(
+      "Consider escalating to a reviewer with broader access or requesting additional evidence.",
+    );
+  } else if (codes.includes("low_confidence")) {
+    parts.push(
+      `Low-confidence evidence: all selected items scored below threshold ` +
+        `(avg score: ${avgConfidence?.toFixed(2) ?? "n/a"}, threshold: ${LOW_CONFIDENCE_THRESHOLD}).`,
+    );
+    parts.push("Results may be unreliable. Manual review recommended before execution.");
+  } else if (codes.includes("acl_restricted")) {
+    parts.push(
+      "ACL-restricted evidence: some high-relevance candidates were excluded by access " +
+        "control policies.",
+    );
+    parts.push(
+      "The best unrestricted evidence is shown. Contact a privileged reviewer if restricted items are required.",
+    );
+  }
+
+  return parts.join(" ");
+}
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -67,6 +263,8 @@ export interface CuratedBundle {
   selected_asset_ids: string[];
   rationale_trace: RationaleEntry[];
   token_budget: TokenBudget;
+  /** Session 16b: escalation info when only low-confidence or ACL-restricted evidence is available */
+  escalation?: EscalationInfo;
 }
 
 // ---------------------------------------------------------------------------
@@ -167,6 +365,16 @@ const INTENT_PATTERNS: IntentPattern[] = [
       "wiki: Org Glossary",
       "org-glossary.md",
       "wiki: Project Index",
+    ],
+    store_hint: "proj-org-shared",
+  },
+  {
+    // Session 16b: synthetic restricted-best-match scenario for escalation testing
+    keywords: ["restricted access", "restricted-best-match", "test escalation", "acl escalation"],
+    intent: "restricted_best_match_test",
+    label: "Restricted Best Match",
+    evidence_hints: [
+      "wiki: Restricted Classification Index",
     ],
     store_hint: "proj-org-shared",
   },
@@ -311,6 +519,9 @@ export function buildCuratedBundle(
   const TOKEN_LIMIT = 4000;
   const TOKENS_PER_ITEM = 480;
 
+  // Session 16b: restricted-best-match test intent produces low-confidence evidence
+  const isRestrictedBestMatchTest = subtask.intent_label === "Restricted Best Match";
+
   // Build selected items from expected evidence + a wiki summary page
   const selectedItems: CuratedItem[] = [];
   const rationaleTrace: RationaleEntry[] = [];
@@ -320,22 +531,31 @@ export function buildCuratedBundle(
     const title = isWiki ? ref.slice(6).trim() : ref.split("/").pop() ?? ref;
     const itemId = `ci-${shortHash(subtask.subtask_id + ref)}-${idx}`;
 
+    // Session 16b: restricted-best-match test uses low confidence scores (< threshold)
+    const score = isRestrictedBestMatchTest
+      ? parseFloat((0.32 - idx * 0.03).toFixed(2))
+      : parseFloat((0.95 - idx * 0.05).toFixed(2));
+
     selectedItems.push({
       item_id: itemId,
       type: isWiki ? "wiki_page" : "asset",
       title,
       source_ref: ref,
-      inclusion_reason: `Matched intent "${subtask.intent_label}" — ${
-        isWiki ? "wiki synthesis page relevant to task scope" : "source asset directly referenced by task"
-      }`,
+      inclusion_reason: isRestrictedBestMatchTest
+        ? `Best available match for intent "${subtask.intent_label}" — selected despite low confidence score (${score}). Higher-relevance items were ACL-restricted.`
+        : `Matched intent "${subtask.intent_label}" — ${
+            isWiki ? "wiki synthesis page relevant to task scope" : "source asset directly referenced by task"
+          }`,
       token_estimate: TOKENS_PER_ITEM,
     });
 
     rationaleTrace.push({
       item_id: itemId,
-      rationale: `Selected at Level ${isWiki ? "1 (domain wiki)" : "2 (specific file)"} based on intent-pattern match for "${subtask.intent_label}". Score: ${(0.95 - idx * 0.05).toFixed(2)}.`,
+      rationale: isRestrictedBestMatchTest
+        ? `Selected as restricted best match at Level ${isWiki ? "1 (domain wiki)" : "2 (specific file)"}. Confidence is below threshold (${score} < ${LOW_CONFIDENCE_THRESHOLD}). ACL-restricted items were excluded from candidate pool.`
+        : `Selected at Level ${isWiki ? "1 (domain wiki)" : "2 (specific file)"} based on intent-pattern match for "${subtask.intent_label}". Score: ${score}.`,
       retrieval_level: isWiki ? "level_1" : "level_2",
-      score: parseFloat((0.95 - idx * 0.05).toFixed(2)),
+      score,
     });
   });
 
@@ -353,16 +573,27 @@ export function buildCuratedBundle(
       title: "Wiki: Procurement Log",
       exclusion_reason: `Low freshness score (last updated >90 days ago). Superseded by more recent evidence items.`,
     },
+    // Session 16b: restricted-best-match test includes an ACL-restricted dropped item
+    ...(isRestrictedBestMatchTest
+      ? [
+          {
+            item_id: `ci-dropped-${shortHash(subtask.subtask_id + "acl")}`,
+            type: "wiki_page" as const,
+            title: "Wiki: Confidential Classification Rules",
+            exclusion_reason: `ACL restricted: caller lacks 'restricted' scope required to access this item. Excluded from context pack.`,
+          },
+        ]
+      : []),
   ].filter(
     (d) => !selectedItems.some((s) => s.title === d.title),
-  );
+  ) as DroppedItem[];
 
   const tokensUsed = selectedItems.reduce((sum, item) => sum + item.token_estimate, 0);
   const selectedAssetIds = selectedItems
     .filter((i) => i.type === "asset")
     .map((i) => `asset-${shortHash(i.item_id)}`);
 
-  return {
+  const bundle: CuratedBundle = {
     selected_items: selectedItems,
     dropped_items: droppedItems,
     selected_asset_ids: selectedAssetIds,
@@ -373,6 +604,46 @@ export function buildCuratedBundle(
       remaining: TOKEN_LIMIT - tokensUsed,
     },
   };
+
+  // Session 16b: detect and embed escalation status
+  bundle.escalation = detectEscalation(bundle);
+
+  return bundle;
+}
+
+// ---------------------------------------------------------------------------
+// Run events
+// ---------------------------------------------------------------------------
+
+export type RunEventType =
+  | "task_created"
+  | "subtask_created"
+  | "curation_started"
+  | "curation_completed"
+  | "item_selected"
+  | "item_dropped"
+  | "context_confirmed"
+  | "override_applied"
+  | "escalation_triggered"; // Session 16b: emitted when restricted-best-match escalation fires
+
+export interface RunEvent {
+  event_id: string;
+  run_id: string;
+  correlation_id: string;
+  task_id: string;
+  subtask_id: string | null;
+  snapshot_id: string | null;
+  event_type: RunEventType;
+  actor: "system" | "user";
+  /** Machine-readable reason code, e.g. "intent_match", "low_score", "user_removed" */
+  reason_code: string;
+  /** Human-readable description */
+  description: string;
+  /** Optional ref to evidence item */
+  item_id: string | null;
+  item_title: string | null;
+  metadata: Record<string, unknown>;
+  occurred_at: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -403,6 +674,12 @@ export interface SnapshotRecord {
   task_id: string;
   subtask_id: string;
   context_pack_json: CuratedBundle;
+  /** SHA-256 hex digest of context_pack_json (deterministic). Added Session 16. */
+  content_hash: string;
+  /** HMAC-SHA256 trace signature. Added Session 16b. */
+  trace_signature: string | null;
+  /** Ordered run event log captured at curation time. Added Session 16. */
+  run_events_snapshot: RunEvent[];
   created_at: string;
 }
 
@@ -417,6 +694,7 @@ interface FallbackStoreShape {
   subtasks: Map<string, SubtaskRecord>;
   snapshots: Map<string, SnapshotRecord>;
   idempotencyIndex: Map<string, string>;
+  runEvents: Map<string, RunEvent[]>; // keyed by run_id
 }
 
 declare global {
@@ -430,7 +708,238 @@ if (!globalThis.__orgMemoryFallbackStore) {
     subtasks: new Map<string, SubtaskRecord>(),
     snapshots: new Map<string, SnapshotRecord>(),
     idempotencyIndex: new Map<string, string>(),
+    runEvents: new Map<string, RunEvent[]>(),
   };
 }
 
 export const fallbackStore: FallbackStoreShape = globalThis.__orgMemoryFallbackStore;
+
+// ---------------------------------------------------------------------------
+// Run event helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Append one or more run events to the in-memory event log.
+ * Events are grouped by run_id.
+ */
+export function emitRunEvents(runId: string, events: RunEvent[]): void {
+  const existing = fallbackStore.runEvents.get(runId) ?? [];
+  fallbackStore.runEvents.set(runId, [...existing, ...events]);
+}
+
+/**
+ * Return all events for a given run_id, ordered by occurred_at ascending.
+ */
+export function getRunEvents(runId: string): RunEvent[] {
+  return (fallbackStore.runEvents.get(runId) ?? []).slice().sort(
+    (a, b) => a.occurred_at.localeCompare(b.occurred_at),
+  );
+}
+
+/**
+ * Return all events associated with a snapshot_id across all runs.
+ */
+export function getEventsBySnapshotId(snapshotId: string): RunEvent[] {
+  const result: RunEvent[] = [];
+  for (const events of fallbackStore.runEvents.values()) {
+    for (const ev of events) {
+      if (ev.snapshot_id === snapshotId) result.push(ev);
+    }
+  }
+  return result.sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+}
+
+/**
+ * Build the standard set of run events for a completed curation pass.
+ * Called by the curate route after building the bundle.
+ */
+export function buildCurationEvents(
+  runId: string,
+  taskId: string,
+  subtaskId: string,
+  snapshotId: string,
+  bundle: CuratedBundle,
+  intentLabel: string,
+  now: string,
+): RunEvent[] {
+  const corrId = `corr-${shortHash(runId + subtaskId)}`;
+  const events: RunEvent[] = [];
+
+  events.push({
+    event_id: `ev-${shortHash(runId + "curation_started")}`,
+    run_id: runId,
+    correlation_id: corrId,
+    task_id: taskId,
+    subtask_id: subtaskId,
+    snapshot_id: null,
+    event_type: "curation_started",
+    actor: "system",
+    reason_code: "curation_triggered",
+    description: `Curation pass started for subtask intent "${intentLabel}".`,
+    item_id: null,
+    item_title: null,
+    metadata: { intent_label: intentLabel, store_count: 1 },
+    occurred_at: now,
+  });
+
+  // Per-item selected events
+  bundle.selected_items.forEach((item, idx) => {
+    const trace = bundle.rationale_trace.find((r) => r.item_id === item.item_id);
+    events.push({
+      event_id: `ev-sel-${shortHash(item.item_id + runId)}`,
+      run_id: runId,
+      correlation_id: corrId,
+      task_id: taskId,
+      subtask_id: subtaskId,
+      snapshot_id: snapshotId,
+      event_type: "item_selected",
+      actor: "system",
+      reason_code: "intent_match",
+      description: `Item "${item.title}" selected at ${trace?.retrieval_level ?? "level_2"} (score ${trace?.score ?? 0}).`,
+      item_id: item.item_id,
+      item_title: item.title,
+      metadata: {
+        item_type: item.type,
+        retrieval_level: trace?.retrieval_level,
+        score: trace?.score,
+        token_estimate: item.token_estimate,
+        position: idx,
+      },
+      occurred_at: now,
+    });
+  });
+
+  // Per-item dropped events
+  bundle.dropped_items.forEach((item) => {
+    events.push({
+      event_id: `ev-drop-${shortHash(item.item_id + runId)}`,
+      run_id: runId,
+      correlation_id: corrId,
+      task_id: taskId,
+      subtask_id: subtaskId,
+      snapshot_id: snapshotId,
+      event_type: "item_dropped",
+      actor: "system",
+      reason_code: "below_threshold",
+      description: `Item "${item.title}" dropped: ${item.exclusion_reason}`,
+      item_id: item.item_id,
+      item_title: item.title,
+      metadata: { item_type: item.type, exclusion_reason: item.exclusion_reason },
+      occurred_at: now,
+    });
+  });
+
+  events.push({
+    event_id: `ev-${shortHash(runId + "curation_completed")}`,
+    run_id: runId,
+    correlation_id: corrId,
+    task_id: taskId,
+    subtask_id: subtaskId,
+    snapshot_id: snapshotId,
+    event_type: "curation_completed",
+    actor: "system",
+    reason_code: "curation_success",
+    description: `Curation completed. ${bundle.selected_items.length} items selected, ${bundle.dropped_items.length} dropped. Snapshot: ${snapshotId}.`,
+    item_id: null,
+    item_title: null,
+    metadata: {
+      selected_count: bundle.selected_items.length,
+      dropped_count: bundle.dropped_items.length,
+      tokens_used: bundle.token_budget.used,
+      token_limit: bundle.token_budget.limit,
+      snapshot_id: snapshotId,
+    },
+    occurred_at: now,
+  });
+
+  // Session 16b: emit escalation_triggered event when restricted-best-match fires
+  if (bundle.escalation?.escalated) {
+    events.push({
+      event_id: `ev-${shortHash(runId + "escalation_triggered")}`,
+      run_id: runId,
+      correlation_id: corrId,
+      task_id: taskId,
+      subtask_id: subtaskId,
+      snapshot_id: snapshotId,
+      event_type: "escalation_triggered",
+      actor: "system",
+      reason_code: bundle.escalation.primary_reason_code ?? "low_confidence",
+      description: bundle.escalation.description,
+      item_id: null,
+      item_title: null,
+      metadata: {
+        escalation_codes: bundle.escalation.reason_codes,
+        avg_confidence: bundle.escalation.avg_confidence,
+        acl_items_present: bundle.escalation.acl_items_present,
+        snapshot_id: snapshotId,
+      },
+      occurred_at: now,
+    });
+  }
+
+  return events;
+}
+
+/**
+ * Build run events for a context-confirm operation.
+ */
+export function buildConfirmEvents(
+  runId: string,
+  taskId: string,
+  subtaskId: string,
+  originalSnapshotId: string,
+  confirmedSnapshotId: string,
+  removedCount: number,
+  addedCount: number,
+  overrideReason: string,
+  now: string,
+): RunEvent[] {
+  const corrId = `corr-${shortHash(runId + subtaskId + "confirm")}`;
+  const events: RunEvent[] = [];
+
+  if (removedCount > 0 || addedCount > 0) {
+    events.push({
+      event_id: `ev-${shortHash(runId + "override_applied")}`,
+      run_id: runId,
+      correlation_id: corrId,
+      task_id: taskId,
+      subtask_id: subtaskId,
+      snapshot_id: confirmedSnapshotId,
+      event_type: "override_applied",
+      actor: "user",
+      reason_code: "user_override",
+      description: `User applied overrides: ${removedCount} removed, ${addedCount} added. Reason: "${overrideReason || "none provided"}".`,
+      item_id: null,
+      item_title: null,
+      metadata: {
+        removed_count: removedCount,
+        added_count: addedCount,
+        override_reason: overrideReason,
+        original_snapshot_id: originalSnapshotId,
+      },
+      occurred_at: now,
+    });
+  }
+
+  events.push({
+    event_id: `ev-${shortHash(runId + "context_confirmed")}`,
+    run_id: runId,
+    correlation_id: corrId,
+    task_id: taskId,
+    subtask_id: subtaskId,
+    snapshot_id: confirmedSnapshotId,
+    event_type: "context_confirmed",
+    actor: "user",
+    reason_code: "user_confirmed",
+    description: `Context pack confirmed. Confirmed snapshot: ${confirmedSnapshotId}.`,
+    item_id: null,
+    item_title: null,
+    metadata: {
+      original_snapshot_id: originalSnapshotId,
+      confirmed_snapshot_id: confirmedSnapshotId,
+    },
+    occurred_at: now,
+  });
+
+  return events;
+}

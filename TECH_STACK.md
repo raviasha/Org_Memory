@@ -201,3 +201,77 @@ No plan amendment is required before Session 4.
 7. **Agent and environment IDs** are long-lived, created once per deployment environment, and stored in environment variables (`ANTHROPIC_AGENT_ID`, `ANTHROPIC_ENVIRONMENT_ID`).
 8. **Individual memory files** must stay under 100 kB. The ingest pipeline must chunk or summarise content that exceeds this limit.
 9. **Memory paths** follow the convention defined in the plan: `/assets/{asset_id}.md` for canonical asset memories, and `/sessions/*`, `/decisions/*`, etc. for supplemental memories.
+
+---
+
+## Provider Abstraction Layer — Session 15
+
+### Dual-API-key requirement
+This constraint is enforced in code and must be respected by all callers and UI operators:
+
+> Even when **OpenAI** is selected as the execution provider, a **Claude API key** is always required for memory store operations (ingest, canonical asset memory writes, store attach/detach). Only the final subtask execution step uses the OpenAI adapter. Memory store operations always use Claude.
+
+### Implementation
+| Concern | Location |
+|---|---|
+| Adapter abstraction | `apps/web/src/lib/provider-adapter.ts` |
+| Key validation (`validateProviderKeys`) | `apps/web/src/lib/provider-adapter.ts` |
+| Validate endpoint | `POST /api/v1/provider/validate` |
+| Execute endpoint | `POST /api/v1/subtasks/{subtask_id}/execute` |
+| UI provider selector | `apps/web/src/app/tasks/page.tsx` (`ProviderPanel` component) |
+
+### Providers supported in v1
+| Provider | Execution | Memory store ops | Notes |
+|---|---|---|---|
+| `claude` | Claude API (`claude-opus-4-5`) | Claude Managed Agents | Default |
+| `openai` | OpenAI API (`gpt-4o`) | Claude Managed Agents | Requires **both** `claude_api_key` and `openai_api_key` |
+
+### Stub mode
+When no API keys are provided the adapter returns a deterministic mock response. This allows the prototype flow to be demoed end-to-end without real API access.
+
+### Error contract for missing keys (provider=openai, no claude_api_key)
+```json
+{
+  "error": "claude_api_key is required for memory store operations even when using OpenAI as the execution provider...",
+  "provider": "openai",
+  "dual_key_required": true,
+  "errors": ["..."]
+}
+```
+HTTP status: `400`.
+
+### Code comment requirement
+The dual-key constraint must be documented in code comments at every call site in the provider adapter and execute route. See `provider-adapter.ts` for the canonical comment block.
+
+---
+
+## Governance Layer — Session 16
+
+### Snapshot Immutability
+Every curated snapshot now carries a `content_hash` field — a SHA-256 hex digest of the deterministically serialised `context_pack_json`. This hash:
+- Is computed at curation time in `apps/web/src/app/api/v1/subtasks/[subtask_id]/curate/route.ts`
+- Uses `computeContentHash()` from `apps/web/src/lib/task-decomposer.ts` (key-sorted JSON → SHA-256)
+- Is returned by `GET /api/v1/snapshots/{snapshot_id}` and `GET /api/v1/snapshots/{snapshot_id}/explainability`
+- Enables replay reproducibility: fetch the snapshot, verify the hash matches, and re-execute the same context
+
+### Run Events Snapshot
+Each snapshot also stores `run_events_snapshot` — an ordered copy of the run event log captured at curation time. This enables full replay without querying the live `run_events` table.
+
+### New API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/v1/runs/{run_id}/events` | `GET` | Ordered event timeline for a run. Supports `event_type` filter and cursor pagination. |
+
+### Database Migration
+`supabase/migrations/20260524000000_session16_governance.sql` adds:
+- `run_snapshots.content_hash TEXT` — SHA-256 hex of `context_pack_json`
+- `run_snapshots.subtask_id TEXT` — FK to `subtasks`
+- `run_snapshots.run_events_snapshot JSONB` — denormalised event log at curation time
+
+### Explainability UI Updates
+The `/explainability` screen now shows:
+- **Immutable badge** (`aria-label="Immutable snapshot badge"`) when `content_hash` is present
+- **SHA-256 digest** displayed inline in the snapshot metadata panel
+- **Replay Audit Trail panel** (`aria-label="Replay audit trail panel"`) with a "Load Run Events" button that fetches the live event log from `/api/v1/runs/{run_id}/events`
+
