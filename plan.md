@@ -999,7 +999,7 @@ Exit criteria: each run is reproducible from snapshot and rationale metadata.
 Deliverable: escalation flow when only low-confidence or ACL-restricted evidence is available, plus immutable or signed trace verification path.
 Exit criteria: restricted-best-match cases are surfaced with reason codes and trace signatures validate in replay.
 
-17. - [ ] Session 17, Platform Track: incremental indexing and status lifecycle.
+17. - [x] Session 17, Platform Track: incremental indexing and status lifecycle.
 Deliverable: queue, delta detection, and freshness updates.
 Exit criteria: changed sources become retrievable within SLA and reflected in dashboard.
 

@@ -47,6 +47,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as crypto from "node:crypto";
+import {
+  buildTrustGovernanceMetadata,
+  evaluateSourceTrust,
+} from "../../../../../lib/source-trust";
 
 // ---------------------------------------------------------------------------
 // Auth helper
@@ -297,10 +301,11 @@ export async function POST(request: NextRequest) {
     relative_path: string;
     source_type: "document" | "image";
     content_sha256: string;
-    ingest_status: "indexed";
+    ingest_status: "indexed" | "failed";
     normalized_text: string;
     extraction_metadata: Record<string, unknown>;
     binary_ref: string | null;
+    trust_governance: ReturnType<typeof buildTrustGovernanceMetadata>;
   }
 
   const fileResults: FileResult[] = [];
@@ -321,6 +326,11 @@ export async function POST(request: NextRequest) {
       source_type === "image"
         ? stubImageExtraction(filename, mime)
         : extractDocumentText(bytes, mime, filename);
+    const trustPolicy = evaluateSourceTrust({
+      sourceType: source_type,
+      fileNameOrUrl: relative_path,
+      normalizedText: normalized_text,
+    });
 
     fileResults.push({
       asset_id: crypto.randomUUID(),
@@ -328,10 +338,11 @@ export async function POST(request: NextRequest) {
       relative_path,
       source_type,
       content_sha256,
-      ingest_status: "indexed",
+      ingest_status: trustPolicy.quarantined ? "failed" : "indexed",
       normalized_text,
       extraction_metadata,
       binary_ref: null,
+      trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
     });
   }
 
@@ -437,6 +448,7 @@ export async function POST(request: NextRequest) {
             folder_path: folder_name,
             relative_path: result.relative_path,
             ingest_run_id,
+            trust_governance: result.trust_governance,
           },
           extraction_metadata: result.extraction_metadata,
           ingested_at: now,
@@ -475,6 +487,7 @@ export async function POST(request: NextRequest) {
       normalized_text: r.normalized_text,
       extraction_metadata: r.extraction_metadata,
       binary_ref: r.binary_ref,
+      trust_governance: r.trust_governance,
     })),
   });
 }

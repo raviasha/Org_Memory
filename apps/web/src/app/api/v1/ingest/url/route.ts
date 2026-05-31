@@ -71,6 +71,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as crypto from "node:crypto";
+import {
+  buildTrustGovernanceMetadata,
+  evaluateSourceTrust,
+} from "../../../../../lib/source-trust";
 
 // ---------------------------------------------------------------------------
 // Auth helper (same pattern as other ingest routes)
@@ -426,6 +430,13 @@ export async function POST(request: NextRequest) {
     content_type: sourceFormat === "html" ? "text/html" : "text/plain",
   };
 
+  const trustPolicy = evaluateSourceTrust({
+    sourceType: "url_scrape",
+    fileNameOrUrl: url,
+    normalizedText: normalized_text,
+  });
+  const finalIngestStatus = trustPolicy.quarantined ? "failed" : "indexed";
+
   const assetRecord = {
     asset_id,
     org_id,
@@ -435,7 +446,7 @@ export async function POST(request: NextRequest) {
     normalized_text,
     optional_binary_ref: null,
     acl_scope,
-    ingest_status: "indexed" as const,
+    ingest_status: finalIngestStatus,
     content_hash: content_sha256,
     parent_asset_id: null,
     lineage_metadata: {
@@ -444,6 +455,7 @@ export async function POST(request: NextRequest) {
       fetched_at,
       page_last_modified: pageLastModified,
       ingest_run_id,
+      trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
     },
     extraction_metadata,
     ingested_at: now,
@@ -509,9 +521,11 @@ export async function POST(request: NextRequest) {
       asset_slug,
       project_id,
       content_sha256,
-      ingest_status: "indexed",
+      ingest_status: finalIngestStatus,
       normalized_text,
       extraction_metadata,
+      trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
+      quarantine_reason_codes: trustPolicy.reasonCodes,
     },
     { status: 200 },
   );

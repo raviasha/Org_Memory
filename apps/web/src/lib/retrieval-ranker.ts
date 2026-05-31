@@ -35,6 +35,10 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import {
+  isAssetQuarantined,
+  staleDemotionFromTimestamp,
+} from "./source-trust";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -107,12 +111,14 @@ export interface ScoreBreakdown {
   trust_score:   number;
   freshness:     number;
   semantic_score: number;
+  stale_demotion: number;
   level_boost:   number;
   composite:     number;
 }
 
 export interface RankedEvidence {
   evidence_id:      string;
+  asset_id:         string | null;
   project_id:       string;
   evidence_type:    string;
   retrieval_level:  string;
@@ -156,6 +162,8 @@ interface EvidenceRow {
   org_id:                   string;
   project_id:               string;
   evidence_type:            string;
+  asset_id:                 string | null;
+  source_asset_ids:         string[];
   retrieval_level:          string;
   title:                    string;
   summary_snippet:          string;
@@ -169,6 +177,12 @@ interface EvidenceRow {
   semantic_score:           number | null;
   semantic_score_cached_at: string | null;
   updated_at:               string;
+}
+
+interface AssetStateRow {
+  asset_id: string;
+  ingest_status: string;
+  lineage_metadata: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -283,6 +297,9 @@ function buildRationale(
   if (row.retrieval_level === "level_1") parts.push("domain/entity page");
   if (breakdown.trust_score >= 0.85) parts.push(`high-trust source (${row.evidence_type})`);
   if (breakdown.freshness >= 0.8)  parts.push("recently updated");
+  if (breakdown.stale_demotion > 0) {
+    parts.push(`stale-source demotion applied (${breakdown.stale_demotion.toFixed(2)})`);
+  }
   if (breakdown.semantic_score >= 0.6) parts.push("rich content");
   const composite = breakdown.composite.toFixed(3);
   return parts.length > 0
@@ -359,6 +376,7 @@ export async function rankEvidence(
     .from("evidence_items")
     .select(`
       evidence_id, org_id, project_id, evidence_type,
+      asset_id, source_asset_ids,
       retrieval_level, title, summary_snippet,
       wiki_page_slug, file_path_or_url,
       acl_scope, hierarchy_path, lineage_chain, keyword_hints,
@@ -392,14 +410,67 @@ export async function rankEvidence(
     };
   }
 
+  const referencedAssetIds = new Set<string>();
+  for (const row of rows) {
+    if (row.asset_id) referencedAssetIds.add(row.asset_id);
+    for (const id of row.source_asset_ids ?? []) {
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        referencedAssetIds.add(id);
+      }
+    }
+  }
+
+  const assetStateById = new Map<string, AssetStateRow>();
+  if (referencedAssetIds.size > 0) {
+    const { data: assetRows } = await supabase
+      .from("assets")
+      .select("asset_id, ingest_status, lineage_metadata")
+      .in("asset_id", Array.from(referencedAssetIds))
+      .returns<AssetStateRow[]>();
+
+    for (const row of assetRows ?? []) {
+      assetStateById.set(row.asset_id, row);
+    }
+  }
+
+  const filteredRows = rows.filter((row) => {
+    const linkedIds = row.evidence_type === "asset"
+      ? [row.asset_id]
+      : (row.source_asset_ids ?? []);
+
+    for (const id of linkedIds) {
+      if (!id) continue;
+      const assetState = assetStateById.get(id);
+      if (!assetState) continue;
+      if (isAssetQuarantined(assetState.lineage_metadata, assetState.ingest_status)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  if (filteredRows.length === 0) {
+    return {
+      task_text: taskText,
+      project_id: filters.project_id ?? null,
+      intent_classes: detectedIntents,
+      total_candidates: rows.length,
+      items: [],
+      retrieval_levels_included: levels,
+      scores_from_cache: true,
+    };
+  }
+
   // Score and rank
   const scored: Array<{ row: EvidenceRow; breakdown: ScoreBreakdown }> =
-    rows.map((row) => {
+    filteredRows.map((row) => {
       const intentMatch = computeIntentMatch(row, taskTextLower, detectedIntents);
       const trustScore  = row.trust_score ?? 0.8;
       const freshness   = computeFreshness(row.updated_at);
       // Semantic score from cache (fallback to 0.5 if still NULL after refresh)
       const semanticScore = row.semantic_score ?? 0.5;
+      const staleDemotion = staleDemotionFromTimestamp(row.updated_at);
       const levelBoost  = LEVEL_BOOST[row.retrieval_level] ?? 0;
 
       const composite =
@@ -407,13 +478,14 @@ export async function rankEvidence(
         W_TRUST     * trustScore   +
         W_FRESHNESS * freshness    +
         W_SEMANTIC  * semanticScore +
-        levelBoost;
+        levelBoost - staleDemotion;
 
       const breakdown: ScoreBreakdown = {
         intent_match:   intentMatch,
         trust_score:    trustScore,
         freshness,
         semantic_score: semanticScore,
+        stale_demotion: staleDemotion,
         level_boost:    levelBoost,
         composite:      Math.min(1.0, composite),
       };
@@ -431,6 +503,7 @@ export async function rankEvidence(
 
   const items: RankedEvidence[] = topN.map(({ row, breakdown }, idx) => ({
     evidence_id:      row.evidence_id,
+    asset_id:         row.asset_id,
     project_id:       row.project_id,
     evidence_type:    row.evidence_type,
     retrieval_level:  row.retrieval_level,
@@ -454,7 +527,7 @@ export async function rankEvidence(
     task_text:      taskText,
     project_id:     filters.project_id ?? null,
     intent_classes: detectedIntents,
-    total_candidates: rows.length,
+    total_candidates: filteredRows.length,
     items,
     retrieval_levels_included: levelsPresent,
     scores_from_cache: true, // semantic scores always read from cache after refresh

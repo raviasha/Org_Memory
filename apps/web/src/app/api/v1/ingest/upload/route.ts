@@ -47,6 +47,10 @@ import {
   emitMemoryEvent,
 } from "../../../../../lib/managed-memory";
 import { getSchemaVersion } from "../../../../../lib/schema-injection";
+import {
+  buildTrustGovernanceMetadata,
+  evaluateSourceTrust,
+} from "../../../../../lib/source-trust";
 
 // ---------------------------------------------------------------------------
 // Memory write constants
@@ -329,6 +333,12 @@ export async function POST(request: NextRequest) {
       ? stubImageExtraction(filename, mime)
       : extractDocumentText(bytes, mime, filename);
 
+  const trustPolicy = evaluateSourceTrust({
+    sourceType: source_type,
+    fileNameOrUrl: filename,
+    normalizedText: normalized_text,
+  });
+
   const ingest_run_id = crypto.randomUUID();
   const asset_id = crypto.randomUUID();
   const now = new Date().toISOString();
@@ -345,7 +355,7 @@ export async function POST(request: NextRequest) {
   let memory_store_id: string | null = null;
   let memory_version_id: string | null = null;
   const schema_version = getSchemaVersion();
-  let final_ingest_status = "indexed";
+  let final_ingest_status = trustPolicy.quarantined ? "failed" : "indexed";
 
   if (supabaseUrl && supabaseServiceKey) {
     try {
@@ -400,10 +410,14 @@ export async function POST(request: NextRequest) {
         normalized_text,
         optional_binary_ref: binary_ref,
         acl_scope,
-        ingest_status: "indexed",
+        ingest_status: final_ingest_status,
         content_hash: content_sha256,
         parent_asset_id: null,
-        lineage_metadata: { ingest_run_id, source_format: source_type },
+        lineage_metadata: {
+          ingest_run_id,
+          source_format: source_type,
+          trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
+        },
         extraction_metadata,
         ingest_run_id,
         ingested_at: now,
@@ -414,6 +428,27 @@ export async function POST(request: NextRequest) {
         .from("assets")
         .upsert(record, { onConflict: "asset_id" });
       if (insertErr) throw insertErr;
+
+      // Session 17b quarantine gate: do not allow suspicious assets to
+      // influence memory or wiki shaping until operator override.
+      if (trustPolicy.quarantined) {
+        return NextResponse.json({
+          ingest_run_id,
+          asset_id,
+          source_type,
+          filename,
+          content_sha256,
+          ingest_status: final_ingest_status,
+          normalized_text,
+          extraction_metadata,
+          binary_ref,
+          memory_store_id,
+          memory_version_id,
+          schema_version,
+          trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
+          quarantine_reason_codes: trustPolicy.reasonCodes,
+        });
+      }
 
       // -----------------------------------------------------------------------
       // Session 8d: Managed Agents memory write
@@ -559,6 +594,8 @@ export async function POST(request: NextRequest) {
     memory_store_id,
     memory_version_id,
     schema_version,
+    trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
+    quarantine_reason_codes: trustPolicy.reasonCodes,
   });
 }
 

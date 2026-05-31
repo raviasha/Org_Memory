@@ -66,6 +66,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import * as crypto from "node:crypto";
+import {
+  buildTrustGovernanceMetadata,
+  evaluateSourceTrust,
+} from "../../../../../lib/source-trust";
 
 // ---------------------------------------------------------------------------
 // Auth helper (same pattern as other ingest routes)
@@ -339,6 +343,11 @@ export async function POST(request: NextRequest) {
   const assetRecords = stubObjects.map((obj) => {
     const mime = mimeFromKey(obj.key);
     const { metadata, normalizedText } = buildExtractionMetadata(obj.key, obj.content, mime);
+    const trustPolicy = evaluateSourceTrust({
+      sourceType: "object_store",
+      fileNameOrUrl: `${source_uri}/${obj.key}`,
+      normalizedText,
+    });
     const contentHash = crypto.createHash("sha256").update(obj.content).digest("hex");
 
     // Deterministic asset_id — stable across idempotent re-ingests
@@ -356,7 +365,7 @@ export async function POST(request: NextRequest) {
       normalized_text: normalizedText,
       optional_binary_ref: null,
       acl_scope,
-      ingest_status: "indexed" as const,
+      ingest_status: trustPolicy.quarantined ? "failed" as const : "indexed" as const,
       content_hash: contentHash,
       parent_asset_id: null,
       lineage_metadata: {
@@ -364,6 +373,7 @@ export async function POST(request: NextRequest) {
         source_uri,
         object_key: obj.key,
         ingest_run_id,
+        trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
       },
       extraction_metadata: metadata,
       ingested_at: now,

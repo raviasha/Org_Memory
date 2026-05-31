@@ -46,6 +46,10 @@ import type { NextRequest } from "next/server";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
+import {
+  buildTrustGovernanceMetadata,
+  evaluateSourceTrust,
+} from "../../../../../lib/source-trust";
 
 // ---------------------------------------------------------------------------
 // Auth helper (same pattern as health endpoint)
@@ -302,6 +306,11 @@ export async function POST(request: NextRequest) {
       project_id,
       repo_slug,
     );
+    const trustPolicy = evaluateSourceTrust({
+      sourceType: spec.source_type ?? "document",
+      fileNameOrUrl: `${repo_slug}/${relPath}`,
+      normalizedText,
+    });
     const stem = path.basename(relPath, path.extname(relPath));
     const contentHash = crypto
       .createHash("sha256")
@@ -317,7 +326,7 @@ export async function POST(request: NextRequest) {
       normalized_text: normalizedText,
       optional_binary_ref: null,
       acl_scope,
-      ingest_status: "indexed" as const,
+      ingest_status: trustPolicy.quarantined ? "failed" as const : "indexed" as const,
       content_hash: contentHash,
       parent_asset_id: parentAssetId,
       lineage_metadata: {
@@ -327,6 +336,7 @@ export async function POST(request: NextRequest) {
         relative_path: relPath,
         file_stem: stem,
         ingest_run_id,
+        trust_governance: buildTrustGovernanceMetadata(trustPolicy, now),
       },
       ingested_at: now,
       last_modified_at: now,

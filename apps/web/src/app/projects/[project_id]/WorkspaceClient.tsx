@@ -1,13 +1,16 @@
 "use client";
 
 /**
- * WorkspaceClient — Session 8b
+ * WorkspaceClient — Sessions 8b / 17
  *
  * Project workspace client component. Provides:
  *   - Project header (name, team, description, status badge)
  *   - Asset table showing all assets including soft-deleted ones
  *   - File upload form to add assets to the project
  *   - Remove action per non-deleted asset (soft-delete)
+ *   - Reindex action per active indexed asset (Session 17)
+ *   - Freshness status column: fresh / stale / never_indexed (Session 17)
+ *   - Incremental Indexing panel showing recent index_jobs (Session 17)
  *   - "Ingest Operations" section showing soft-delete audit entries
  *     (timestamp, actor, asset_id) for deleted assets
  */
@@ -40,11 +43,24 @@ interface AssetRow {
   source_type: string;
   file_path_or_url: string;
   ingest_status: string;
+  freshness_status: string | null; // Session 17
+  indexed_at: string | null;       // Session 17
   ingested_at: string;
   last_modified_at: string;
   parent_asset_id: string | null;
   deleted_at: string | null;
   deleted_by: string | null;
+}
+
+// Session 17: index job row shape
+interface IndexJobRow {
+  job_id: string;
+  asset_id: string;
+  status: string;
+  delta_detected: boolean | null;
+  requested_at: string;
+  completed_at: string | null;
+  error_message: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -58,6 +74,22 @@ const STATUS_COLOR: Record<string, { color: string; bg: string }> = {
   failed: { color: "#991b1b", bg: "#fee2e2" },
   deleted: { color: "#6b7280", bg: "#f3f4f6" },
   blocked_on_memory_write: { color: "#92400e", bg: "#fef3c7" },
+};
+
+// Session 17: freshness status badge colours
+const FRESHNESS_COLOR: Record<string, { color: string; bg: string }> = {
+  fresh:         { color: "#065f46", bg: "#d1fae5" },
+  stale:         { color: "#92400e", bg: "#fef3c7" },
+  never_indexed: { color: "#6b7280", bg: "#f3f4f6" },
+};
+
+// Session 17: index job status badge colours
+const JOB_STATUS_COLOR: Record<string, { color: string; bg: string }> = {
+  queued:    { color: "#1d4ed8", bg: "#dbeafe" },
+  running:   { color: "#92400e", bg: "#fef3c7" },
+  completed: { color: "#065f46", bg: "#d1fae5" },
+  no_change: { color: "#6b7280", bg: "#f3f4f6" },
+  failed:    { color: "#991b1b", bg: "#fee2e2" },
 };
 
 function shortId(id: string) {
@@ -96,6 +128,15 @@ export default function WorkspaceClient({ projectId }: Props) {
   // Remove (soft-delete) state
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
+
+  // Session 17: reindex state
+  const [reindexingId, setReindexingId] = useState<string | null>(null);
+  const [reindexResult, setReindexResult] = useState<string | null>(null);
+  const [reindexError, setReindexError] = useState<string | null>(null);
+
+  // Session 17: index jobs
+  const [indexJobs, setIndexJobs] = useState<IndexJobRow[]>([]);
+  const [indexJobsLoading, setIndexJobsLoading] = useState(false);
 
   // ---------------------------------------------------------------------------
   // Fetch project
@@ -177,6 +218,73 @@ export default function WorkspaceClient({ projectId }: Props) {
       setUploadError(e instanceof Error ? e.message : "Upload failed");
     } finally {
       setUploading(false);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Session 17: fetch index jobs for this project
+  // ---------------------------------------------------------------------------
+
+  const fetchIndexJobs = useCallback(async () => {
+    setIndexJobsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/v1/index-jobs?project_id=${encodeURIComponent(projectId)}&limit=50`,
+        { headers: { Authorization: "Bearer prototype-dev-token" } },
+      );
+      if (!res.ok) return;
+      const json = await res.json();
+      setIndexJobs(json.data ?? []);
+    } catch {
+      // Best-effort
+    } finally {
+      setIndexJobsLoading(false);
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    fetchIndexJobs();
+  }, [fetchIndexJobs]);
+
+  // ---------------------------------------------------------------------------
+  // Session 17: reindex asset
+  // ---------------------------------------------------------------------------
+
+  async function handleReindex(assetId: string) {
+    setReindexingId(assetId);
+    setReindexResult(null);
+    setReindexError(null);
+    try {
+      const res = await fetch(`/api/v1/assets/${assetId}/reindex`, {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer prototype-dev-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ force: true }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
+      setReindexResult(
+        json.status === "no_change"
+          ? `No change detected for asset ${assetId.slice(0, 8)}…`
+          : `Queued reindex job ${json.job_id.slice(0, 8)}… (delta: ${json.delta_detected ?? "unknown"})`
+      );
+      // Run the queue immediately for prototype convenience
+      await fetch("/api/v1/index-jobs/run", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer prototype-dev-token",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ project_id: projectId }),
+      });
+      await fetchAssets();
+      await fetchIndexJobs();
+    } catch (e) {
+      setReindexError(e instanceof Error ? e.message : "Reindex failed");
+    } finally {
+      setReindexingId(null);
     }
   }
 
@@ -381,6 +489,8 @@ export default function WorkspaceClient({ projectId }: Props) {
                   <th style={TH}>File / URL</th>
                   <th style={TH}>Type</th>
                   <th style={TH}>Status</th>
+                  <th style={TH}>Freshness</th>
+                  <th style={TH}>Last Indexed</th>
                   <th style={TH}>Ingested</th>
                   <th style={TH}>Actions</th>
                 </tr>
@@ -423,30 +533,154 @@ export default function WorkspaceClient({ projectId }: Props) {
                           {a.ingest_status}
                         </span>
                       </td>
+                      <td style={TD}>
+                        {/* Session 17: freshness badge */}
+                        {(() => {
+                          const fs = a.freshness_status ?? (a.ingest_status === 'indexed' ? 'fresh' : 'never_indexed');
+                          const fc = FRESHNESS_COLOR[fs] ?? FRESHNESS_COLOR.never_indexed;
+                          return (
+                            <span
+                              data-freshness-status={fs}
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                padding: "2px 7px",
+                                borderRadius: 10,
+                                color: fc.color,
+                                background: fc.bg,
+                              }}
+                            >
+                              {fs.replace(/_/g, ' ')}
+                            </span>
+                          );
+                        })()}
+                      </td>
+                      <td style={{ ...TD, color: "#9ca3af", fontSize: 12 }}>{fmtTs(a.indexed_at)}</td>
                       <td style={{ ...TD, color: "#9ca3af" }}>{fmtTs(a.ingested_at)}</td>
                       <td style={TD}>
                         {!isDeleted && (
-                          <button
-                            onClick={() => handleRemove(a.asset_id, a.file_path_or_url)}
-                            disabled={removingId === a.asset_id}
-                            aria-label={`Remove asset ${a.asset_id}`}
-                            style={{
-                              fontSize: 12,
-                              color: "#dc2626",
-                              background: "transparent",
-                              border: "1px solid #fca5a5",
-                              borderRadius: 4,
-                              padding: "3px 8px",
-                              cursor: removingId === a.asset_id ? "default" : "pointer",
-                            }}
-                          >
-                            {removingId === a.asset_id ? "Removing…" : "Remove"}
-                          </button>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button
+                              onClick={() => handleReindex(a.asset_id)}
+                              disabled={reindexingId === a.asset_id}
+                              aria-label={`Reindex asset ${a.asset_id}`}
+                              title="Queue incremental re-index"
+                              style={{
+                                fontSize: 12,
+                                color: "#1d4ed8",
+                                background: "transparent",
+                                border: "1px solid #93c5fd",
+                                borderRadius: 4,
+                                padding: "3px 8px",
+                                cursor: reindexingId === a.asset_id ? "default" : "pointer",
+                              }}
+                            >
+                              {reindexingId === a.asset_id ? "Reindexing…" : "Reindex"}
+                            </button>
+                            <button
+                              onClick={() => handleRemove(a.asset_id, a.file_path_or_url)}
+                              disabled={removingId === a.asset_id}
+                              aria-label={`Remove asset ${a.asset_id}`}
+                              style={{
+                                fontSize: 12,
+                                color: "#dc2626",
+                                background: "transparent",
+                                border: "1px solid #fca5a5",
+                                borderRadius: 4,
+                                padding: "3px 8px",
+                                cursor: removingId === a.asset_id ? "default" : "pointer",
+                              }}
+                            >
+                              {removingId === a.asset_id ? "Removing…" : "Remove"}
+                            </button>
+                          </div>
                         )}
                         {isDeleted && (
                           <span style={{ fontSize: 11, color: "#9ca3af" }}>Soft-deleted</span>
                         )}
                       </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* Reindex feedback */}
+      {reindexResult && (
+        <p style={{ fontSize: 13, color: "#1d4ed8", marginBottom: 8 }}>{reindexResult}</p>
+      )}
+      {reindexError && (
+        <p role="alert" style={{ fontSize: 13, color: "#dc2626", marginBottom: 8 }}>{reindexError}</p>
+      )}
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Session 17: Incremental Indexing — index jobs panel */}
+      {/* ------------------------------------------------------------------ */}
+      <section aria-label="Incremental indexing jobs" style={{ marginBottom: 36 }}>
+        <h2 style={{ fontSize: 16, margin: "0 0 4px" }}>Incremental Indexing</h2>
+        <p style={{ margin: "0 0 12px", fontSize: 13, color: "#6b7280" }}>
+          Queue of delta-detection and re-index jobs for this project. Changed sources
+          transition from stale → fresh after the job completes.
+        </p>
+
+        {indexJobsLoading && indexJobs.length === 0 ? (
+          <p style={{ fontSize: 13, color: "#6b7280" }}>Loading index jobs…</p>
+        ) : indexJobs.length === 0 ? (
+          <p style={{ fontSize: 13, color: "#9ca3af" }}>
+            No index jobs yet. Click "Reindex" on an asset above to queue one.
+          </p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 13,
+                minWidth: 640,
+              }}
+            >
+              <thead>
+                <tr style={{ background: "#eff6ff", borderBottom: "1px solid #bfdbfe" }}>
+                  <th style={TH}>Job ID</th>
+                  <th style={TH}>Asset ID</th>
+                  <th style={TH}>Status</th>
+                  <th style={TH}>Delta</th>
+                  <th style={TH}>Requested</th>
+                  <th style={TH}>Completed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {indexJobs.map((j) => {
+                  const jc = JOB_STATUS_COLOR[j.status] ?? JOB_STATUS_COLOR.queued;
+                  return (
+                    <tr
+                      key={j.job_id}
+                      data-job-id={j.job_id}
+                      data-job-status={j.status}
+                      style={{ borderBottom: "1px solid #eff6ff" }}
+                    >
+                      <td style={TD}><code style={{ fontSize: 11 }}>{j.job_id.slice(0, 8)}…</code></td>
+                      <td style={TD}><code style={{ fontSize: 11 }}>{j.asset_id.slice(0, 8)}…</code></td>
+                      <td style={TD}>
+                        <span style={{
+                          fontSize: 11, fontWeight: 600,
+                          padding: "2px 7px", borderRadius: 10,
+                          color: jc.color, background: jc.bg,
+                        }}>
+                          {j.status}
+                        </span>
+                        {j.error_message && (
+                          <span title={j.error_message} style={{ marginLeft: 6, fontSize: 11, color: "#dc2626" }}>⚠</span>
+                        )}
+                      </td>
+                      <td style={TD}>
+                        {j.delta_detected === null ? "—" : j.delta_detected ? "yes" : "no"}
+                      </td>
+                      <td style={{ ...TD, color: "#9ca3af", fontSize: 12 }}>{fmtTs(j.requested_at)}</td>
+                      <td style={{ ...TD, color: "#9ca3af", fontSize: 12 }}>{fmtTs(j.completed_at)}</td>
                     </tr>
                   );
                 })}
