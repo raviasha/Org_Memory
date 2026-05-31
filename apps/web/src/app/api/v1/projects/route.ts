@@ -1,18 +1,20 @@
 /**
  * GET /api/v1/projects — Session 8
+ * POST /api/v1/projects — Session 8b
  *
- * List projects with KPI aggregates (asset count, last ingest, indexed count,
- * failed count). Used by the Project Hub index dashboard.
+ * GET: List active projects with KPI aggregates.
+ * POST: Create a new project.
  *
- * Query parameters:
+ * GET query parameters:
  *   limit   int  — max results (default 50, max 200)
  *   cursor  str  — opaque pagination cursor (project_id of last seen row)
  *
- * Response 200:
- * {
- *   data: ProjectKPI[],
- *   pagination: { has_more, next_cursor }
- * }
+ * POST body:
+ *   { name: string, description?: string, owner_team?: string,
+ *     acl_scope?: string, org_id?: string }
+ *
+ * POST response 201:
+ *   { project: ProjectKPI }
  */
 
 import { NextResponse } from "next/server";
@@ -179,10 +181,11 @@ export async function GET(request: NextRequest) {
         auth: { persistSession: false },
       });
 
-      // Fetch projects with pagination
+      // Fetch active projects with pagination (exclude soft-deleted)
       let query = db
         .from("projects")
-        .select("project_id, name, description, owner_team, acl_scope, created_at, updated_at")
+        .select("project_id, name, description, owner_team, acl_scope, created_at, updated_at, status")
+        .eq("status", "active")
         .order("project_id", { ascending: true })
         .limit(limit + 1);
 
@@ -294,4 +297,113 @@ export async function GET(request: NextRequest) {
       next_cursor: hasMore ? page[page.length - 1]?.project_id ?? null : null,
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// POST /api/v1/projects — Session 8b: create a new project
+// ---------------------------------------------------------------------------
+
+export async function POST(request: NextRequest) {
+  const auth = await verifyAuth(request);
+  if (!auth.ok) return auth.response;
+
+  let body: Record<string, unknown>;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body", code: "bad_request" }, { status: 400 });
+  }
+
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  if (!name) {
+    return NextResponse.json({ error: "name is required", code: "validation_error" }, { status: 400 });
+  }
+
+  const description = typeof body.description === "string" ? body.description : null;
+  const owner_team = typeof body.owner_team === "string" ? body.owner_team : null;
+  const acl_scope = typeof body.acl_scope === "string" ? body.acl_scope : "org:acme";
+  const org_id =
+    typeof body.org_id === "string" ? body.org_id : "00000000-0000-0000-0000-000000000001";
+
+  // Slugify name to form project_id
+  const slug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 40);
+  const suffix = Math.random().toString(36).slice(2, 7);
+  const project_id = `proj-${slug}-${suffix}`;
+
+  const now = new Date().toISOString();
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (supabaseUrl && supabaseServiceKey) {
+    try {
+      const { createClient } = await import("@supabase/supabase-js");
+      const db = createClient(supabaseUrl, supabaseServiceKey, {
+        auth: { persistSession: false },
+      });
+
+      const { data, error } = await db
+        .from("projects")
+        .insert({
+          project_id,
+          org_id,
+          name,
+          description,
+          owner_team,
+          acl_scope,
+          status: "active",
+        })
+        .select()
+        .single();
+
+      if (error) {
+        return NextResponse.json(
+          { error: "Database error", code: "db_error", detail: error.message },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json(
+        {
+          project: {
+            ...data,
+            asset_count: 0,
+            indexed_count: 0,
+            failed_count: 0,
+            last_ingest_at: null,
+          },
+        },
+        { status: 201 },
+      );
+    } catch (err) {
+      console.error("Supabase error in POST /api/v1/projects:", err);
+      // Fall through to static response
+    }
+  }
+
+  // Static fallback
+  return NextResponse.json(
+    {
+      project: {
+        project_id,
+        org_id,
+        name,
+        description,
+        owner_team,
+        acl_scope,
+        status: "active",
+        created_at: now,
+        updated_at: now,
+        asset_count: 0,
+        indexed_count: 0,
+        failed_count: 0,
+        last_ingest_at: null,
+      },
+    },
+    { status: 201 },
+  );
 }

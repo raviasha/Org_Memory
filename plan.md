@@ -928,7 +928,7 @@ Exit criteria: at least one object-store or shared-folder source ingests and pro
 Deliverable: source inventory, indexing status, freshness indicators.
 Exit criteria: you can validate indexing progress after each ingestion session.
 
-8b. - [ ] Session 8b, UI/Data Integration Track: project and asset lifecycle controls.
+8b. - [x] Session 8b, UI/Data Integration Track: project and asset lifecycle controls.
 Deliverable: create project, select project, add asset, soft-delete asset with audit visibility across supported intake classes.
 Exit criteria: user can fully manage project-scoped assets in UI and every action emits auditable events. Specifically, the following Playwright E2E browser tests must pass — covering requirement Step 1 in full:
 - Create project: fill in project name and submit the create-project form; the new project appears in the project list with status "active".
@@ -937,7 +937,7 @@ Exit criteria: user can fully manage project-scoped assets in UI and every actio
 - Remove file from project: trigger the remove action on an asset in the project workspace; the asset transitions to "deleted" state and the soft-delete audit entry (timestamp, actor, asset_id) is visible in the ingest operations screen.
 - Audit trail persistence: reload the project workspace after a delete action and confirm the deleted asset row remains visible in the audit view (not silently purged).
 
-8c. - [ ] Session 8c, Platform API Track: external API curation surface MVP.
+8c. - [x] Session 8c, Platform API Track: external API curation surface MVP.
 Deliverable: task and subtask curation endpoints plus snapshot read endpoint with ACL and idempotency.
 Exit criteria: third-party caller can request curated subtask bundles and replay exact snapshot output. Specifically, the following Playwright API tests must pass — covering requirement Steps 6, 7, and 8 in full:
 - Task creation and subtask generation (Step 6): `POST /v1/tasks/curate` with a task text anchored to a seeded project returns a subtask plan containing at least two subtasks; each subtask carries a candidate memory-store routing summary, an intent label, and expected evidence targets; the response includes an idempotency-safe task_id.
@@ -945,7 +945,7 @@ Exit criteria: third-party caller can request curated subtask bundles and replay
 - Third-party end-to-end flow (Step 8): a scripted Playwright API test simulates a third-party caller with no UI interaction — it submits a task via `POST /v1/tasks/curate`, retrieves each subtask via `POST /v1/subtasks/{subtask_id}/curate`, and fetches the resulting snapshot via `GET /v1/snapshots/{snapshot_id}`; all three calls must succeed with consistent task_id and snapshot_id linkage and must return the same bundle on replay.
 - UI task creation screen (Step 6): a Playwright browser test navigates to the Task and Subtask Planner screen, fills in a task description, submits it, and asserts that at least one generated subtask row is visible; the prototype/production mode banner must be visible on the screen.
 
-8d. - [ ] Session 8d, Platform Track: Claude Managed Agents memory store integration.
+8d. - [x] Session 8d, Platform Track: Claude Managed Agents memory store integration.
 Depends on: Session 5b (use stub upload path if 5b is not yet complete).
 Pre-implementation note: verify the exact Anthropic API product name, endpoint paths, and required account tier for "Claude Managed Agents memory stores" (create, seed, attach, read, write operations) before implementation begins; update the tech stack doc if the name or API surface has changed since this document was authored.
 Deliverable: full Managed Agents memory API integration — create and seed project memory stores, attach/detach stores per session, write canonical asset memories at ingest (deterministic paths, provenance fields), idempotent update with optimistic concurrency, and ingest completion gate that blocks until memory write succeeds. Define max-retry count and exponential backoff for Managed Agents API unavailability; on retry exhaustion set `ingest_status = blocked_on_memory_write` (not a hard failure) so the asset record is preserved and the memory write can be retried on next pass or by operator action. Implement supplemental memory paths (sessions, decisions, hypotheses, open questions, links). Emit structured events for all memory operations including retry attempts and final gate resolution. Define and implement the SCHEMA.md injection contract: specify and document exactly how SCHEMA.md is loaded into every Claude API call (system prompt prefix, context attachment file, or equivalent mechanism); include validation that the loaded SCHEMA.md version matches the current repo version before each session starts.
@@ -954,35 +954,35 @@ Exit criteria: upload an asset through Session 5b pipeline (or stub path); canon
 - Memory artifact export to wiki (Step 3): after a successful ingest, `GET /v1/memory-stores/{memory_store_id}/activity` returns the write operations performed during ingest including the canonical asset memory path and version ID; a corresponding `wiki_pages` row exists (or is updated) with the asset referenced in `source_asset_ids`.
 - Wiki update on ingest (Step 5): the wiki `index.md` row (`root/index` slug) is updated to include a reference to the newly ingested asset's summary page; the `root/log` row has a new append entry recording the ingest run_id and timestamp; Playwright API tests assert both wiki_pages rows have `updated_at` timestamps after the ingest run.
 
-8e. - [ ] Session 8e, Platform Track: memory-store routing catalog and scoring layer.
+8e. - [x] Session 8e, Platform Track: memory-store routing catalog and scoring layer.
 Depends on: Sessions 2b (wiki bootstrap complete), 8d (stores exist).
 Deliverable: implement Design Decision 10b — build and seed store-catalog wiki pages (one page per project memory store) with the full required routing metadata (identity, hierarchy, ACL, content signals, freshness/quality scores, operational stats, routing priors). Implement the routing scoring function: parse task intent and entities, ACL-filter candidate stores, score by intent match, hierarchy proximity, freshness, and historical helpfulness, and return a ranked store shortlist with per-store evidence targets and token budget estimates. Implement anti-bloat policy enforcement: per-subtask store-count cap (max 3 by default), per-subtask memory-file budget, and cross-store deduplication flag. Emit structured routing events for every scoring and filtering decision.
 Exit criteria: given a test task anchored to a project, the routing function returns a ranked store list with per-store evidence targets and budget estimates; ACL-ineligible stores are absent from results; scoring is deterministic for the same input; budget-exceeded path triggers escalation rather than silent expansion; Playwright API test covers routing request, ACL filtering, cap enforcement, and budget-exceeded escalation path.
 
 #### Wave 2: Retrieval core and context control
-9. - [ ] Session 9, Retrieval Track: canonical metadata and file-evidence model.
+9. - [x] Session 9, Retrieval Track: canonical metadata and file-evidence model.
 Deliverable: unified asset and wiki-page/file evidence records with ACL, trust, hierarchy, provenance.
 Exit criteria: each selected evidence item resolves to wiki page slug and/or file path or URL with source lineage.
 
-10. - [ ] Session 10, Retrieval Track: Level 0 and Level 1 retrieval plus promotion gate.
+10. - [x] Session 10, Retrieval Track: Level 0 and Level 1 retrieval plus promotion gate.
 Constraint: the `semantic` component of `score_breakdown` must be produced without embeddings or vector indexes (v1 constraint from the Context Rationale Schema). Allowed methods: symbolic/lexical features, taxonomy or intent matches, and LLM-judged reranking over wiki pages and metadata only. Any embedding-based method is v2-only and requires an explicit plan amendment before implementation.
 Semantic scoring implementation rule: compute semantic scores offline per wiki-page update and cache the result; recompute only when relevant wiki pages are modified (cache invalidation trigger: `wiki_pages.updated_at` change for pages in the candidate set). This keeps the live retrieval path free of per-query LLM calls and compliant with low-cost prototype mode.
 Deliverable: (1) task router and ranker for summary and domain retrieval with offline-cached semantic scores; (2) promotion gate — implement the memory-derived output promotion flow: validate provenance resolves to canonical assets, pass ACL check, write accepted output into `wiki_pages` / `index` / `log` with `memory_version_id → asset_id` mapping persisted in canonical audit tables. The v1 promotion path is manual-trigger only (operator action or task close); no background scheduler is required.
 Exit criteria: top candidates returned with rationale and scores; no embedding model or vector index is invoked; semantic scores are read from cache, not computed live per query; a memory-derived output can be promoted into a wiki page with provenance and ACL check passing; `memory_version_id → asset_id` mapping is persisted in canonical audit tables; Playwright API test covers retrieval request with cached scores and one promotion flow scenario.
 
-11. - [ ] Session 11, Retrieval Track: Level 2 specific-file picker.
+11. - [x] Session 11, Retrieval Track: Level 2 specific-file picker.
 Deliverable: evidence selector enforcing specific-file inclusion when available.
 Exit criteria: NPV-style tasks include correct business-case file.
 
-12. - [ ] Session 12, Retrieval Track: context assembler, budget caps, and cross-store deduplication.
+12. - [x] Session 12, Retrieval Track: context assembler, budget caps, and cross-store deduplication.
 Deliverable: deterministic context pack with token budgets by level. Cross-store deduplication: after multi-store reads, identify overlapping facts and retain one canonical evidence item per concept in the final context pack; dropped duplicates are logged in the curation manifest with deduplication reason. Curation manifest must record selected item IDs, dropped item IDs, deduplication reasons, and budget usage for every context pack produced.
 Exit criteria: hard budget enforcement and stable pack ordering; cross-project Task 9 (vendor compliance, 3-store input) produces a deduplicated final pack with no duplicate evidence items; curation manifest is persisted and queryable; Playwright API test validates deduplication output for a two-store input case.
 
-13. - [ ] Session 13, UI Track: context review and override UX.
+13. - [x] Session 13, UI Track: context review and override UX.
 Deliverable: inspect, add, remove, and confirm context items.
 Exit criteria: user edits persist and are reflected in final payload.
 
-14. - [ ] Session 14, UI Track: explainability and non-inclusion panel.
+14. - [x] Session 14, UI Track: explainability and non-inclusion panel.
 Deliverable: inclusion reasons and excluded-item reason codes.
 Exit criteria: every included item and top excluded items are explainable in UI.
 

@@ -22,7 +22,7 @@ export default defineConfig({
   webServer: process.env.CI
     ? undefined
     : {
-        command: "npm run dev --workspace=apps/web",
+        command: "bash start-dev.sh",
         url: "http://localhost:3000",
         reuseExistingServer: true,
         timeout: 120_000,

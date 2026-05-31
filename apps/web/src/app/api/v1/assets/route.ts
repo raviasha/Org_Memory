@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
         .select(
           "asset_id, org_id, project_id, source_type, file_path_or_url, " +
             "acl_scope, ingest_status, content_hash, ingested_at, last_modified_at, " +
-            "parent_asset_id, lineage_metadata",
+            "parent_asset_id, lineage_metadata, deleted_at, deleted_by",
           { count: "exact" },
         )
         .order("ingested_at", { ascending: false })
